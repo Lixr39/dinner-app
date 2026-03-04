@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#ff6b35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="今天吃什么">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" id="pwa-manifest">
+<link rel="apple-touch-icon" id="pwa-icon">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>今天做什么菜</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#faf8f5;
+  --card:#ffffff;
+  --or:#ff6b35;--or2:#ff8c5a;--or3:#fff2ec;--or4:#ffe8de;
+  --gr:#27ae60;--gr2:#eafaf1;
+  --bl:#3498db;--bl2:#ebf5fb;
+  --dark:#1a1a2e;--mid:#6b7280;--light:#9ca3af;--border:#f0ede8;
+  --shadow:0 2px 16px rgba(255,107,53,0.08);
+  --shadow2:0 8px 32px rgba(255,107,53,0.15);
+}
+body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;min-height:100vh;color:var(--dark);overflow-x:hidden}
+
+/* NAV */
+.nav{background:white;border-bottom:1px solid var(--border);display:flex;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.nav-tab{flex:1;padding:10px 4px 8px;text-align:center;font-size:11px;font-weight:700;color:var(--light);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:2px;letter-spacing:.5px}
+.nav-tab .ti{font-size:22px;line-height:1}
+.nav-tab.active{color:var(--or);border-bottom-color:var(--or)}
+.nav-badge{background:var(--or);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:900;display:none}
+.nav-badge.show{display:inline-block}
+
+/* PAGE */
+.page{display:none;max-width:480px;margin:0 auto;padding:20px 16px 100px}
+.page.active{display:block}
+.page-hero{margin-bottom:24px}
+.page-title{font-size:24px;font-weight:900;color:var(--dark);letter-spacing:-.5px}
+.page-sub{font-size:12px;color:var(--light);margin-top:4px;line-height:1.6}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.section-label{font-size:10px;letter-spacing:3px;color:var(--or);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--or3)}
+
+/* BUDGET */
+.budget-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.budget-input{flex:1;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-size:22px;font-weight:900;color:var(--dark);font-family:'Noto Sans SC',sans-serif;outline:none;background:white;transition:border-color .2s}
+.budget-input:focus{border-color:var(--or)}
+.budget-unit{font-size:14px;color:var(--mid);font-weight:700}
+.budget-quick{display:flex;gap:8px;flex-wrap:wrap}
+.bq{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;transition:all .2s;font-family:'Noto Sans SC',sans-serif}
+.bq.sel,.bq:active{background:var(--or);color:white;border-color:var(--or)}
+
+/* CHIPS 多选 */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;transition:all .2s;font-family:'Noto Sans SC',sans-serif;position:relative}
+.chip:hover{border-color:var(--or2);color:var(--or)}
+.chip.sel{background:var(--or);color:white;border-color:var(--or);box-shadow:0 2px 8px rgba(255,107,53,.3)}
+.chip.sel::after{content:attr(data-n);position:absolute;top:-6px;right:-6px;background:white;color:var(--or);border:1.5px solid var(--or);border-radius:10px;font-size:9px;font-weight:900;width:16px;height:16px;display:flex;align-items:center;justify-content:center;line-height:1}
+.chips-hint{font-size:10px;color:var(--light);margin-top:6px}
+
+/* TOGGLE */
+.sw-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.sw-row:last-child{border:none;padding-bottom:0}
+.sw-label{font-size:13px;font-weight:600;color:var(--dark)}
+.sw-sub{font-size:11px;color:var(--light);margin-top:2px}
+.tog{width:46px;height:26px;border-radius:13px;background:#e5e7eb;position:relative;cursor:pointer;transition:background .25s;flex-shrink:0}
+.tog.on{background:var(--or)}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.tog.on::after{left:23px}
+
+/* GEN BTN */
+.gen-btn{width:100%;padding:18px;background:linear-gradient(135deg,var(--or),var(--or2));color:white;border:none;border-radius:16px;font-size:16px;font-weight:900;letter-spacing:1px;cursor:pointer;transition:all .25s;font-family:'Noto Sans SC',sans-serif;box-shadow:0 6px 20px rgba(255,107,53,.35);margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+.gen-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,107,53,.4)}
+.gen-btn:active{transform:scale(.98)}
+.gen-count{background:rgba(255,255,255,.25);border-radius:10px;padding:2px 8px;font-size:12px}
+
+/* SWIPE AREA */
+#swipeArea{position:relative;height:440px;margin:20px 0;display:none}
+#swipeArea.show{display:block}
+.swipe-card{position:absolute;top:0;left:0;right:0;background:white;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,0.12);overflow:hidden;transition:transform .05s;cursor:grab;touch-action:none;user-select:none}
+.swipe-card:active{cursor:grabbing}
+
+.sc-header{padding:22px 20px 18px;background:linear-gradient(145deg,var(--or),#e8470f);color:white;position:relative;overflow:hidden}
+.sc-header::before{content:'';position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08)}
+.sc-header::after{content:'';position:absolute;right:20px;top:30px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.06)}
+.sc-cuisine{font-size:10px;letter-spacing:3px;opacity:.8;font-weight:700;margin-bottom:6px}
+.sc-name{font-size:24px;font-weight:900;line-height:1.2;margin-bottom:8px;position:relative}
+.sc-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;opacity:.85}
+.sc-meta span{display:flex;align-items:center;gap:3px;background:rgba(255,255,255,.15);padding:3px 8px;border-radius:10px}
+.sc-taste-badge{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700}
+
+.sc-body{padding:16px 20px 20px}
+.sc-ing-bar{background:var(--or3);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.sc-ing-label{font-size:10px;letter-spacing:2px;color:var(--or);font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between}
+.sc-ing-label span{font-size:11px;letter-spacing:0;font-weight:900}
+.ing-progress{height:4px;background:rgba(255,107,53,.15);border-radius:4px;margin-bottom:8px;overflow:hidden}
+.ing-progress-bar{height:100%;background:linear-gradient(90deg,var(--or),var(--or2));border-radius:4px;transition:width .5s}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{padding:4px 10px;border-radius:10px;font-size:11px;font-weight:600}
+.tag.have{background:var(--gr2);color:var(--gr)}
+.tag.need{background:#fef3cd;color:#d97706}
+
+.sc-budget-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.budget-pill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700}
+.bp-eco{background:#dcfce7;color:#15803d}
+.bp-home{background:#fef9c3;color:#a16207}
+.bp-mid{background:#fff7ed;color:#c2410c}
+.bp-high{background:#fee2e2;color:#b91c1c}
+.sc-ref-cost{font-size:11px;color:var(--light)}
+
+.sc-link{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:linear-gradient(135deg,var(--or3),var(--or4));border-radius:12px;font-size:13px;font-weight:700;color:var(--or);text-decoration:none;transition:all .2s}
+.sc-link:hover{background:var(--or4)}
+
+.swipe-hint{position:absolute;top:24px;padding:8px 18px;border-radius:20px;font-size:14px;font-weight:900;opacity:0;transition:opacity .1s;pointer-events:none;z-index:10;backdrop-filter:blur(4px)}
+.hint-yes{left:16px;background:rgba(39,174,96,.9);color:white}
+.hint-no{right:16px;background:rgba(231,76,60,.9);color:white}
+
+.swipe-btns{display:flex;justify-content:center;gap:24px;margin-top:10px}
+.swipe-btn{width:60px;height:60px;border-radius:50%;border:2px solid;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:white;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.swipe-btn.no{border-color:#ef4444;color:#ef4444}
+.swipe-btn.no:hover{background:#ef4444;color:white;box-shadow:0 4px 20px rgba(239,68,68,.3)}
+.swipe-btn.yes{border-color:var(--gr);color:var(--gr)}
+.swipe-btn.yes:hover{background:var(--gr);color:white;box-shadow:0 4px 20px rgba(39,174,96,.3)}
+.swipe-btn:active{transform:scale(.9)}
+.swipe-counter{text-align:center;font-size:12px;color:var(--light);margin-top:10px;font-weight:600}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--mid)}
+.empty-emoji{font-size:56px;margin-bottom:12px;display:block}
+.empty-text{font-size:14px;line-height:2}
+
+/* 冰箱 */
+.fridge-cat{background:white;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.fcat-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.fcat-emoji{font-size:20px}
+.fcat-title{font-size:14px;font-weight:700;color:var(--dark)}
+.fcat-count{font-size:11px;color:var(--or);font-weight:700;margin-left:auto;background:var(--or3);padding:2px 8px;border-radius:10px}
+.fcat-items{display:flex;flex-wrap:wrap;gap:7px}
+.ing-chip{padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;transition:all .15s;font-family:'Noto Sans SC',sans-serif}
+.ing-chip.sel{background:var(--gr);color:white;border-color:var(--gr);box-shadow:0 2px 8px rgba(39,174,96,.25)}
+
+/* 餐桌 */
+.table-card{background:white;border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)}
+.tc-head{padding:16px 18px;background:linear-gradient(135deg,var(--or),#e8470f);color:white}
+.tc-cuisine{font-size:10px;letter-spacing:2px;opacity:.8;font-weight:700;margin-bottom:4px}
+.tc-name{font-size:18px;font-weight:900;margin-bottom:6px}
+.tc-tags{display:flex;gap:8px;flex-wrap:wrap;font-size:11px}
+.tc-tag{background:rgba(255,255,255,.2);padding:3px 10px;border-radius:10px}
+.tc-rm{float:right;background:rgba(255,255,255,.2);border:none;border-radius:10px;padding:4px 10px;font-size:11px;color:white;cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-top:-2px}
+.tc-rm:hover{background:rgba(255,255,255,.35)}
+.tc-body{padding:16px 18px}
+.tc-missing{font-size:12px;color:#d97706;background:#fef9c3;border-radius:10px;padding:8px 12px;margin-bottom:12px;line-height:1.6}
+.tc-ok{font-size:12px;color:var(--gr);background:var(--gr2);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+.tc-link{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--or3);border-radius:12px;font-size:13px;font-weight:700;color:var(--or);text-decoration:none;margin-bottom:12px;transition:all .2s}
+.cost-row{display:flex;justify-content:space-between;background:var(--or3);border-radius:12px;padding:12px 14px}
+.cost-label{font-size:10px;color:var(--light);font-weight:600;margin-bottom:4px;letter-spacing:.5px}
+.cost-val{font-size:20px;font-weight:900}
+.table-empty{text-align:center;padding:80px 20px;color:var(--light)}
+.table-total{background:linear-gradient(135deg,var(--or),var(--or2));border-radius:16px;padding:20px;text-align:center;color:white;margin-top:6px;box-shadow:var(--shadow2)}
+.tt-label{font-size:12px;opacity:.8;margin-bottom:6px;letter-spacing:1px}
+.tt-val{font-size:36px;font-weight:900}
+
+/* 空状态 */
+.fridge-summary{background:linear-gradient(135deg,var(--gr2),#f0fff4);border:1px solid #bbf7d0;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.fs-icon{font-size:28px}
+.fs-info{flex:1}
+.fs-total{font-size:16px;font-weight:900;color:var(--gr)}
+.fs-sub{font-size:11px;color:var(--mid)}
+
+/* 冰箱搜索 */
+.fridge-search-wrap{position:relative;margin-bottom:16px}
+.fridge-search{width:100%;padding:12px 16px 12px 42px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Noto Sans SC',sans-serif;color:var(--dark);background:white;outline:none;transition:border-color .2s}
+.fridge-search:focus{border-color:var(--or)}
+.fridge-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
+.fridge-search-results{background:white;border:1.5px solid var(--border);border-radius:14px;box-shadow:var(--shadow2);overflow:hidden;display:none}
+.fridge-search-results.show{display:block}
+.search-result-item{padding:12px 16px;font-size:13px;font-weight:600;color:var(--dark);cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);transition:background .15s}
+.search-result-item:last-child{border:none}
+.search-result-item:hover{background:var(--or3)}
+.search-result-item .sri-cat{font-size:10px;color:var(--light);font-weight:400}
+.search-result-item.selected{color:var(--gr)}
+.search-result-item.selected .sri-check{color:var(--gr);font-weight:900}
+.search-no-result{padding:16px;text-align:center;font-size:13px;color:var(--light)}
+.ing-chip-all{border-color:var(--or2);color:var(--or);font-weight:700;}
+.ing-chip-all.sel{background:var(--or);color:white;border-color:var(--or);}
+
+/* 超预算提醒 */
+.budget-warning{background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1.5px solid #fda4af;border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.bw-icon{font-size:28px;flex-shrink:0}
+.bw-text{flex:1}
+.bw-title{font-size:13px;font-weight:900;color:#be123c;margin-bottom:2px}
+.bw-sub{font-size:11px;color:#e11d48}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="showPage('cook')" id="tab-cook"><span class="ti">🍳</span><span>今天吃什么</span></div>
+  <div class="nav-tab" onclick="showPage('fridge')" id="tab-fridge"><span class="ti">🧊</span><span>我的冰箱</span></div>
+  <div class="nav-tab" onclick="showPage('table')" id="tab-table"><span class="ti">🍽️</span><span>餐桌 <span class="nav-badge" id="tableBadge">0</span></span></div>
+</div>
+
+<!-- 今天吃什么 -->
+<div class="page active" id="page-cook">
+  <div class="page-hero">
+    <div class="page-title">今天做什么菜？</div>
+    <div class="page-sub">436道菜 · 10大菜系 · 左滑跳过，右滑加入餐桌 ♥</div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">今日预算</div>
+    <div class="budget-row">
+      <input class="budget-input" id="budget" type="number" placeholder="不限" min="0">
+      <span class="budget-unit">元</span>
+    </div>
+    <div class="budget-quick">
+      <button class="bq" onclick="setBudget(0)">冰箱食材</button>
+      <button class="bq" onclick="setBudget(20)">20元</button>
+      <button class="bq" onclick="setBudget(50)">50元</button>
+      <button class="bq" onclick="setBudget(100)">100元</button>
+      <button class="bq" onclick="setBudget(9999)">不限</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">口味偏好 <span style="letter-spacing:0;font-size:10px;color:var(--light);font-weight:400">最多选3个</span></div>
+    <div class="chips" id="tasteChips">
+      <div class="chip" onclick="selChip(this,'taste')">不限</div>
+      <div class="chip" onclick="selChip(this,'taste')">清淡</div>
+      <div class="chip" onclick="selChip(this,'taste')">咸鲜</div>
+      <div class="chip" onclick="selChip(this,'taste')">微辣</div>
+      <div class="chip" onclick="selChip(this,'taste')">香辣</div>
+      <div class="chip" onclick="selChip(this,'taste')">重辣</div>
+      <div class="chip" onclick="selChip(this,'taste')">麻辣</div>
+      <div class="chip" onclick="selChip(this,'taste')">酸辣</div>
+      <div class="chip" onclick="selChip(this,'taste')">酸甜</div>
+      <div class="chip" onclick="selChip(this,'taste')">甜口</div>
+    </div>
+
+    <div class="section-label" style="margin-top:16px">菜系 <span style="letter-spacing:0;font-size:10px;color:var(--light);font-weight:400">最多选3个</span></div>
+    <div class="chips" id="styleChips">
+      <div class="chip" onclick="selChip(this,'style')">不限</div>
+      <div class="chip" onclick="selChip(this,'style')">家常</div>
+      <div class="chip" onclick="selChip(this,'style')">川菜</div>
+      <div class="chip" onclick="selChip(this,'style')">粤菜</div>
+      <div class="chip" onclick="selChip(this,'style')">潮汕</div>
+      <div class="chip" onclick="selChip(this,'style')">日料</div>
+      <div class="chip" onclick="selChip(this,'style')">西餐</div>
+      <div class="chip" onclick="selChip(this,'style')">东北</div>
+      <div class="chip" onclick="selChip(this,'style')">湘菜</div>
+      <div class="chip" onclick="selChip(this,'style')">泰国</div>
+      <div class="chip" onclick="selChip(this,'style')">越南</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sw-row">
+      <div><div class="sw-label">🧊 优先冰箱食材</div><div class="sw-sub">有食材的菜排在前面</div></div>
+      <div class="tog on" id="tog-fridge" onclick="togSwitch('fridge')"></div>
+    </div>
+  </div>
+
+  <button class="gen-btn" onclick="generate()">
+    <span>✨ 开始推荐</span>
+    <span class="gen-count" id="genCount">436道</span>
+  </button>
+
+  <div id="swipeArea">
+    <div class="swipe-hint hint-yes" id="hintYes">♥ 加入餐桌</div>
+    <div class="swipe-hint hint-no" id="hintNo">✕ 跳过</div>
+    <div id="cardStack"></div>
+  </div>
+  <div class="swipe-btns" id="swipeBtns" style="display:none">
+    <button class="swipe-btn no" onclick="doSwipe('left')" title="跳过">✕</button>
+    <button class="swipe-btn yes" onclick="doSwipe('right')" title="加入餐桌">♥</button>
+  </div>
+  <div class="swipe-counter" id="swipeCounter" style="display:none"></div>
+</div>
+
+<!-- 冰箱 -->
+<div class="page" id="page-fridge">
+  <div class="page-hero">
+    <div class="page-title">🧊 我的冰箱</div>
+    <div class="page-sub">勾选已有食材，推荐时优先匹配·精确计算实际购买成本</div>
+  </div>
+  <div class="fridge-summary">
+    <span class="fs-icon">🥗</span>
+    <div class="fs-info">
+      <div class="fs-total" id="fridgeTotalCount">还没选食材</div>
+      <div class="fs-sub">选好食材后回去开始推荐</div>
+    </div>
+  </div>
+  <div class="fridge-search-wrap">
+    <span class="fridge-search-icon">🔍</span>
+    <input class="fridge-search" id="fridgeSearch" type="text" placeholder="搜索食材快速添加，如：猪里脊、香茅…" oninput="searchIng(this.value)" onblur="setTimeout(()=>hideFridgeSearch(),200)" autocomplete="off">
+    <div class="fridge-search-results" id="fridgeSearchResults"></div>
+  </div>
+  
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🥩</span>
+        <span class="fcat-title">猪肉类</span>
+        <span class="fcat-count" id="cnt-pork">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-pork">
+        <div class="ing-chip ing-chip-all" onclick="togIngAll(this,'pork','猪肉')">🐷 猪肉（全部）</div><div class="ing-chip" onclick="togIng(this,'pork')">五花肉</div><div class="ing-chip" onclick="togIng(this,'pork')">猪里脊</div><div class="ing-chip" onclick="togIng(this,'pork')">猪排骨</div><div class="ing-chip" onclick="togIng(this,'pork')">猪蹄</div><div class="ing-chip" onclick="togIng(this,'pork')">猪肝</div><div class="ing-chip" onclick="togIng(this,'pork')">猪腰</div><div class="ing-chip" onclick="togIng(this,'pork')">猪大肠</div><div class="ing-chip" onclick="togIng(this,'pork')">猪血</div><div class="ing-chip" onclick="togIng(this,'pork')">猪肚</div><div class="ing-chip" onclick="togIng(this,'pork')">猪耳</div><div class="ing-chip" onclick="togIng(this,'pork')">猪颈肉</div><div class="ing-chip" onclick="togIng(this,'pork')">腊肉</div><div class="ing-chip" onclick="togIng(this,'pork')">腊肠</div><div class="ing-chip" onclick="togIng(this,'pork')">猪脊骨</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🐂</span>
+        <span class="fcat-title">牛羊肉</span>
+        <span class="fcat-count" id="cnt-beef">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-beef">
+        <div class="ing-chip ing-chip-all" onclick="togIngAll(this,'beef','牛肉')">🐂 牛肉（全部）</div><div class="ing-chip" onclick="togIng(this,'beef')">牛腩</div><div class="ing-chip" onclick="togIng(this,'beef')">牛里脊</div><div class="ing-chip" onclick="togIng(this,'beef')">牛腱</div><div class="ing-chip" onclick="togIng(this,'beef')">牛百叶</div><div class="ing-chip" onclick="togIng(this,'beef')">牛舌</div><div class="ing-chip" onclick="togIng(this,'beef')">牛排骨</div><div class="ing-chip" onclick="togIng(this,'beef')">牛蹄筋</div><div class="ing-chip" onclick="togIng(this,'beef')">羊肉</div><div class="ing-chip" onclick="togIng(this,'beef')">羊排</div><div class="ing-chip" onclick="togIng(this,'beef')">羊腿</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🐔</span>
+        <span class="fcat-title">禽肉类</span>
+        <span class="fcat-count" id="cnt-poultry">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-poultry">
+        <div class="ing-chip" onclick="togIng(this,'poultry')">整鸡</div><div class="ing-chip" onclick="togIng(this,'poultry')">鸡腿</div><div class="ing-chip" onclick="togIng(this,'poultry')">鸡翅</div><div class="ing-chip" onclick="togIng(this,'poultry')">鸡胸</div><div class="ing-chip" onclick="togIng(this,'poultry')">鸭腿</div><div class="ing-chip" onclick="togIng(this,'poultry')">鸭胸</div><div class="ing-chip" onclick="togIng(this,'poultry')">鹅肉</div><div class="ing-chip" onclick="togIng(this,'poultry')">鸡爪</div><div class="ing-chip" onclick="togIng(this,'poultry')">鸭血</div><div class="ing-chip" onclick="togIng(this,'poultry')">鹅掌</div><div class="ing-chip" onclick="togIng(this,'poultry')">鹅翅</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🦐</span>
+        <span class="fcat-title">虾蟹类</span>
+        <span class="fcat-count" id="cnt-shrimp">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-shrimp">
+        <div class="ing-chip" onclick="togIng(this,'shrimp')">鲜虾</div><div class="ing-chip" onclick="togIng(this,'shrimp')">大头虾</div><div class="ing-chip" onclick="togIng(this,'shrimp')">龙虾</div><div class="ing-chip" onclick="togIng(this,'shrimp')">花蟹</div><div class="ing-chip" onclick="togIng(this,'shrimp')">螃蟹</div><div class="ing-chip" onclick="togIng(this,'shrimp')">大闸蟹</div><div class="ing-chip" onclick="togIng(this,'shrimp')">濑尿虾</div><div class="ing-chip" onclick="togIng(this,'shrimp')">小龙虾</div><div class="ing-chip" onclick="togIng(this,'shrimp')">薄壳</div><div class="ing-chip" onclick="togIng(this,'shrimp')">血蛤</div><div class="ing-chip" onclick="togIng(this,'shrimp')">海螺</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🐟</span>
+        <span class="fcat-title">鱼类</span>
+        <span class="fcat-count" id="cnt-fish">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-fish">
+        <div class="ing-chip" onclick="togIng(this,'fish')">三文鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">鲈鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">草鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">鲤鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">鳜鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">鳕鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">秋刀鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">带鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">鱼头（花鲢）</div><div class="ing-chip" onclick="togIng(this,'fish')">鳢鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">石斑鱼</div><div class="ing-chip" onclick="togIng(this,'fish')">金枪鱼</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🦑</span>
+        <span class="fcat-title">其他海鲜</span>
+        <span class="fcat-count" id="cnt-seafood">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-seafood">
+        <div class="ing-chip" onclick="togIng(this,'seafood')">鱿鱼</div><div class="ing-chip" onclick="togIng(this,'seafood')">章鱼</div><div class="ing-chip" onclick="togIng(this,'seafood')">扇贝</div><div class="ing-chip" onclick="togIng(this,'seafood')">花甲</div><div class="ing-chip" onclick="togIng(this,'seafood')">青口贝</div><div class="ing-chip" onclick="togIng(this,'seafood')">生蚝</div><div class="ing-chip" onclick="togIng(this,'seafood')">帝王蟹</div><div class="ing-chip" onclick="togIng(this,'seafood')">海参</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🥚</span>
+        <span class="fcat-title">蛋类</span>
+        <span class="fcat-count" id="cnt-egg">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-egg">
+        <div class="ing-chip" onclick="togIng(this,'egg')">鸡蛋</div><div class="ing-chip" onclick="togIng(this,'egg')">鸭蛋</div><div class="ing-chip" onclick="togIng(this,'egg')">皮蛋</div><div class="ing-chip" onclick="togIng(this,'egg')">咸蛋</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🥛</span>
+        <span class="fcat-title">奶制品</span>
+        <span class="fcat-count" id="cnt-dairy">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-dairy">
+        <div class="ing-chip" onclick="togIng(this,'dairy')">牛奶</div><div class="ing-chip" onclick="togIng(this,'dairy')">淡奶油</div><div class="ing-chip" onclick="togIng(this,'dairy')">黄油</div><div class="ing-chip" onclick="togIng(this,'dairy')">芝士</div><div class="ing-chip" onclick="togIng(this,'dairy')">椰浆</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🫘</span>
+        <span class="fcat-title">豆制品</span>
+        <span class="fcat-count" id="cnt-tofu">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-tofu">
+        <div class="ing-chip" onclick="togIng(this,'tofu')">嫩豆腐</div><div class="ing-chip" onclick="togIng(this,'tofu')">老豆腐</div><div class="ing-chip" onclick="togIng(this,'tofu')">干豆腐</div><div class="ing-chip" onclick="togIng(this,'tofu')">豆腐皮</div><div class="ing-chip" onclick="togIng(this,'tofu')">腐竹</div><div class="ing-chip" onclick="togIng(this,'tofu')">豆芽</div><div class="ing-chip" onclick="togIng(this,'tofu')">油豆腐</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🥬</span>
+        <span class="fcat-title">叶菜类</span>
+        <span class="fcat-count" id="cnt-leaf">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-leaf">
+        <div class="ing-chip" onclick="togIng(this,'leaf')">白菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">菠菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">包菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">生菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">空心菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">油麦菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">韭菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">芹菜</div><div class="ing-chip" onclick="togIng(this,'leaf')">菜心</div><div class="ing-chip" onclick="togIng(this,'leaf')">西蓝花</div><div class="ing-chip" onclick="togIng(this,'leaf')">番薯叶</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🥕</span>
+        <span class="fcat-title">根茎瓜果</span>
+        <span class="fcat-count" id="cnt-root">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-root">
+        <div class="ing-chip" onclick="togIng(this,'root')">土豆</div><div class="ing-chip" onclick="togIng(this,'root')">白萝卜</div><div class="ing-chip" onclick="togIng(this,'root')">胡萝卜</div><div class="ing-chip" onclick="togIng(this,'root')">莲藕</div><div class="ing-chip" onclick="togIng(this,'root')">冬瓜</div><div class="ing-chip" onclick="togIng(this,'root')">南瓜</div><div class="ing-chip" onclick="togIng(this,'root')">芋头</div><div class="ing-chip" onclick="togIng(this,'root')">番薯</div><div class="ing-chip" onclick="togIng(this,'root')">玉米</div><div class="ing-chip" onclick="togIng(this,'root')">番茄</div><div class="ing-chip" onclick="togIng(this,'root')">茄子</div><div class="ing-chip" onclick="togIng(this,'root')">青椒</div><div class="ing-chip" onclick="togIng(this,'root')">尖椒</div><div class="ing-chip" onclick="togIng(this,'root')">黄瓜</div><div class="ing-chip" onclick="togIng(this,'root')">豆角</div><div class="ing-chip" onclick="togIng(this,'root')">洋葱</div><div class="ing-chip" onclick="togIng(this,'root')">冬笋</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🍄</span>
+        <span class="fcat-title">菌菇类</span>
+        <span class="fcat-count" id="cnt-mushroom">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-mushroom">
+        <div class="ing-chip" onclick="togIng(this,'mushroom')">香菇</div><div class="ing-chip" onclick="togIng(this,'mushroom')">平菇</div><div class="ing-chip" onclick="togIng(this,'mushroom')">金针菇</div><div class="ing-chip" onclick="togIng(this,'mushroom')">木耳</div><div class="ing-chip" onclick="togIng(this,'mushroom')">榛蘑</div><div class="ing-chip" onclick="togIng(this,'mushroom')">杏鲍菇</div><div class="ing-chip" onclick="togIng(this,'mushroom')">茶树菇</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🧅</span>
+        <span class="fcat-title">葱姜蒜香料</span>
+        <span class="fcat-count" id="cnt-herb">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-herb">
+        <div class="ing-chip" onclick="togIng(this,'herb')">大蒜</div><div class="ing-chip" onclick="togIng(this,'herb')">生姜</div><div class="ing-chip" onclick="togIng(this,'herb')">葱</div><div class="ing-chip" onclick="togIng(this,'herb')">香茅</div><div class="ing-chip" onclick="togIng(this,'herb')">柠檬叶</div><div class="ing-chip" onclick="togIng(this,'herb')">九层塔</div><div class="ing-chip" onclick="togIng(this,'herb')">香菜</div><div class="ing-chip" onclick="togIng(this,'herb')">薄荷</div><div class="ing-chip" onclick="togIng(this,'herb')">南姜</div><div class="ing-chip" onclick="togIng(this,'herb')">子姜</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🌾</span>
+        <span class="fcat-title">主食干货</span>
+        <span class="fcat-count" id="cnt-grain">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-grain">
+        <div class="ing-chip" onclick="togIng(this,'grain')">大米</div><div class="ing-chip" onclick="togIng(this,'grain')">糯米</div><div class="ing-chip" onclick="togIng(this,'grain')">面条</div><div class="ing-chip" onclick="togIng(this,'grain')">粉条</div><div class="ing-chip" onclick="togIng(this,'grain')">粉丝</div><div class="ing-chip" onclick="togIng(this,'grain')">河粉</div><div class="ing-chip" onclick="togIng(this,'grain')">米粉</div><div class="ing-chip" onclick="togIng(this,'grain')">米纸</div><div class="ing-chip" onclick="togIng(this,'grain')">乌冬面</div><div class="ing-chip" onclick="togIng(this,'grain')">荞麦面</div><div class="ing-chip" onclick="togIng(this,'grain')">意大利面</div><div class="ing-chip" onclick="togIng(this,'grain')">面粉</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🧂</span>
+        <span class="fcat-title">酱料调味</span>
+        <span class="fcat-count" id="cnt-sauce">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-sauce">
+        <div class="ing-chip" onclick="togIng(this,'sauce')">生抽</div><div class="ing-chip" onclick="togIng(this,'sauce')">老抽</div><div class="ing-chip" onclick="togIng(this,'sauce')">蚝油</div><div class="ing-chip" onclick="togIng(this,'sauce')">鱼露</div><div class="ing-chip" onclick="togIng(this,'sauce')">豆瓣酱</div><div class="ing-chip" onclick="togIng(this,'sauce')">剁椒</div><div class="ing-chip" onclick="togIng(this,'sauce')">老干妈</div><div class="ing-chip" onclick="togIng(this,'sauce')">豆豉</div><div class="ing-chip" onclick="togIng(this,'sauce')">花椒</div><div class="ing-chip" onclick="togIng(this,'sauce')">干辣椒</div><div class="ing-chip" onclick="togIng(this,'sauce')">八角</div><div class="ing-chip" onclick="togIng(this,'sauce')">桂皮</div><div class="ing-chip" onclick="togIng(this,'sauce')">料酒</div><div class="ing-chip" onclick="togIng(this,'sauce')">米醋</div><div class="ing-chip" onclick="togIng(this,'sauce')">白糖</div><div class="ing-chip" onclick="togIng(this,'sauce')">淀粉</div><div class="ing-chip" onclick="togIng(this,'sauce')">芝麻酱</div><div class="ing-chip" onclick="togIng(this,'sauce')">花生酱</div><div class="ing-chip" onclick="togIng(this,'sauce')">味噌</div><div class="ing-chip" onclick="togIng(this,'sauce')">咖喱块</div><div class="ing-chip" onclick="togIng(this,'sauce')">红咖喱酱</div><div class="ing-chip" onclick="togIng(this,'sauce')">绿咖喱酱</div><div class="ing-chip" onclick="togIng(this,'sauce')">沙茶酱</div><div class="ing-chip" onclick="togIng(this,'sauce')">芥末</div><div class="ing-chip" onclick="togIng(this,'sauce')">蜂蜜</div><div class="ing-chip" onclick="togIng(this,'sauce')">海苔</div><div class="ing-chip" onclick="togIng(this,'sauce')">酸菜</div><div class="ing-chip" onclick="togIng(this,'sauce')">泡椒</div><div class="ing-chip" onclick="togIng(this,'sauce')">泡菜</div><div class="ing-chip" onclick="togIng(this,'sauce')">梅干菜</div>
+      </div>
+    </div>
+    <div class="fridge-cat">
+      <div class="fcat-head">
+        <span class="fcat-emoji">🫙</span>
+        <span class="fcat-title">西餐食材</span>
+        <span class="fcat-count" id="cnt-misc">0种</span>
+      </div>
+      <div class="fcat-items" id="grp-misc">
+        <div class="ing-chip" onclick="togIng(this,'misc')">黄油</div><div class="ing-chip" onclick="togIng(this,'misc')">淡奶油</div><div class="ing-chip" onclick="togIng(this,'misc')">芝士</div><div class="ing-chip" onclick="togIng(this,'misc')">红酒</div><div class="ing-chip" onclick="togIng(this,'misc')">白葡萄酒</div><div class="ing-chip" onclick="togIng(this,'misc')">培根</div><div class="ing-chip" onclick="togIng(this,'misc')">火腿</div><div class="ing-chip" onclick="togIng(this,'misc')">午餐肉</div><div class="ing-chip" onclick="togIng(this,'misc')">柠檬</div><div class="ing-chip" onclick="togIng(this,'misc')">青柠</div><div class="ing-chip" onclick="togIng(this,'misc')">欧芹</div><div class="ing-chip" onclick="togIng(this,'misc')">迷迭香</div><div class="ing-chip" onclick="togIng(this,'misc')">百里香</div><div class="ing-chip" onclick="togIng(this,'misc')">罗勒</div><div class="ing-chip" onclick="togIng(this,'misc')">黑胡椒</div><div class="ing-chip" onclick="togIng(this,'misc')">腰果</div><div class="ing-chip" onclick="togIng(this,'misc')">花生</div>
+      </div>
+    </div>
+</div>
+
+<!-- 餐桌 -->
+<div class="page" id="page-table">
+  <div class="page-hero">
+    <div class="page-title">🍽️ 今日餐桌</div>
+    <div class="page-sub">右滑收藏的菜都在这里</div>
+  </div>
+  <div id="tableContent"></div>
+</div>
+
+<script>
+// ===== 价格表 =====
+const PRICE = {"五花肉":18,"猪里脊":20,"猪排骨":22,"猪蹄":18,"猪肝":12,"猪腰":15,"猪大肠":12,"猪血":6,"猪肚":18,"猪耳":12,"腊肉":25,"腊肠":20,"猪颈肉":20,"猪脊骨":15,"猪皮":5,"牛腩":35,"牛里脊":45,"牛腱":30,"牛百叶":20,"牛舌":40,"羊肉":35,"羊排":45,"羊腿":40,"牛排骨":40,"牛蹄筋":25,"整鸡":30,"鸡腿":15,"鸡翅":18,"鸡胸":12,"鸭腿":18,"鸭胸":20,"鹅肉":35,"鸡爪":10,"鸭血":6,"鹅掌":20,"鹅翅":18,"鹿肉":60,"鲜虾":25,"大头虾":30,"龙虾":100,"花蟹":40,"螃蟹":40,"大闸蟹":80,"濑尿虾":35,"小龙虾":40,"三文鱼":40,"鲈鱼":25,"草鱼":15,"鲤鱼":15,"鳜鱼":35,"鳕鱼":30,"秋刀鱼":15,"带鱼":15,"鱼头（花鲢）":20,"鳢鱼":25,"石斑鱼":50,"金枪鱼":40,"鲑鱼子":50,"象鱼":20,"乳鸽":35,"兔头":15,"鱿鱼":20,"章鱼":25,"扇贝":30,"花甲":12,"青口贝":20,"生蚝":30,"海参":80,"薄壳":15,"血蛤":15,"海螺":20,"帝王蟹":150,"和牛":120,"鸡蛋":2,"鸭蛋":3,"皮蛋":3,"咸蛋":3,"牛奶":5,"淡奶油":12,"黄油":10,"芝士":15,"椰浆":6,"嫩豆腐":4,"老豆腐":4,"干豆腐":5,"豆腐皮":5,"腐竹":6,"豆芽":3,"豆腐":4,"油豆腐":5,"鱼豆腐":8,"菠菜":4,"白菜":4,"包菜":3,"生菜":4,"空心菜":4,"油麦菜":4,"韭菜":4,"芹菜":4,"菜心":5,"西蓝花":6,"番薯叶":3,"藜蒿":8,"土豆":3,"白萝卜":3,"胡萝卜":3,"莲藕":6,"冬瓜":4,"南瓜":4,"芋头":5,"番薯":3,"玉米":3,"番茄":5,"茄子":4,"青椒":4,"尖椒":4,"彩椒":6,"黄瓜":4,"丝瓜":4,"豆角":5,"冬笋":15,"竹笋":8,"青木瓜":6,"菠萝":8,"芒果":10,"苹果":5,"梨":5,"橙子":6,"香菇":8,"平菇":6,"金针菇":5,"木耳":8,"榛蘑":15,"杏鲍菇":8,"口蘑":8,"茶树菇":10,"大蒜":2,"生姜":2,"葱":2,"洋葱":3,"香茅":5,"柠檬叶":4,"九层塔":5,"香菜":3,"薄荷":5,"南姜":5,"子姜":6,"大米":3,"糯米":4,"面条":5,"粉条":5,"粉丝":5,"河粉":5,"米粉":5,"米纸":8,"乌冬面":6,"荞麦面":8,"意大利面":8,"饺子皮":5,"春卷皮":5,"面粉":3,"澄面":6,"粘米粉":5,"木薯粉":5,"生抽":1,"老抽":1,"蚝油":1,"鱼露":1,"豆瓣酱":2,"剁椒":3,"老干妈":2,"豆豉":2,"腐乳":2,"花椒":1,"干辣椒":1,"八角":1,"桂皮":1,"料酒":1,"米醋":1,"白糖":1,"淀粉":1,"芝麻酱":2,"花生酱":3,"味噌":5,"咖喱块":5,"黄咖喱块":5,"红咖喱酱":6,"绿咖喱酱":6,"黄咖喱酱":6,"盐":1,"香油":1,"白胡椒":1,"黑胡椒":2,"孜然":1,"五香粉":1,"沙茶酱":3,"沙拉酱":3,"番茄酱":3,"芥末":3,"蜂蜜":4,"麦芽糖":4,"红酒":15,"白葡萄酒":15,"清酒":10,"啤酒":5,"柠檬":3,"青柠":3,"火腿":10,"培根":12,"午餐肉":8,"腊鱼":20,"腊鸡":20,"梅干菜":6,"酸菜":5,"泡菜":6,"泡椒":4,"海苔":5,"海带":4,"木鱼花":8,"芝麻":2,"花生":3,"腰果":15,"藏红花":20,"欧芹":5,"迷迭香":5,"百里香":5,"罗勒":5,"牛至":5};
+
+// ===== 冰箱分类 =====
+const FRIDGE_GROUPS = ["pork","beef","poultry","shrimp","fish","seafood","egg","dairy","tofu","leaf","root","mushroom","herb","grain","sauce","misc"];
+
+// ===== 菜谱数据库 =====
+const DB = [{"name":"番茄炒鸡蛋","style":"家常","taste":["咸鲜","酸甜"],"cost":10,"ingredients":["番茄","鸡蛋","白糖","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E7%95%AA%E8%8C%84%E7%82%92%E9%B8%A1%E8%9B%8B"},{"name":"土豆丝炒青椒","style":"家常","taste":["咸鲜"],"cost":8,"ingredients":["土豆","青椒","大蒜","干辣椒","米醋","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9C%9F%E8%B1%86%E4%B8%9D%E7%82%92%E9%9D%92%E6%A4%92"},{"name":"老干妈炒鸡蛋","style":"家常","taste":["香辣","咸鲜"],"cost":8,"ingredients":["鸡蛋","老干妈","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%80%81%E5%B9%B2%E5%A6%88%E7%82%92%E9%B8%A1%E8%9B%8B"},{"name":"黄瓜炒鸡蛋","style":"家常","taste":["清淡","咸鲜"],"cost":8,"ingredients":["黄瓜","鸡蛋","大蒜","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BB%84%E7%93%9C%E7%82%92%E9%B8%A1%E8%9B%8B"},{"name":"蒜蓉西蓝花","style":"家常","taste":["清淡","咸鲜"],"cost":10,"ingredients":["西蓝花","大蒜","蚝油","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E8%93%89%E8%A5%BF%E8%93%9D%E8%8A%B1"},{"name":"木须肉","style":"家常","taste":["咸鲜"],"cost":22,"ingredients":["猪里脊","鸡蛋","木耳","黄瓜","葱","生抽","淀粉","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%9C%A8%E9%A1%BB%E8%82%89"},{"name":"红烧排骨","style":"家常","taste":["咸鲜","甜口"],"cost":45,"ingredients":["猪排骨","生抽","老抽","白糖","料酒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E6%8E%92%E9%AA%A8"},{"name":"可乐鸡翅","style":"家常","taste":["咸鲜","甜口"],"cost":25,"ingredients":["鸡翅","可乐","生抽","老抽","生姜","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8F%AF%E4%B9%90%E9%B8%A1%E7%BF%85"},{"name":"糖醋排骨","style":"家常","taste":["酸甜"],"cost":45,"ingredients":["猪排骨","白糖","米醋","生抽","老抽","料酒","淀粉","葱","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B3%96%E9%86%8B%E6%8E%92%E9%AA%A8"},{"name":"番茄牛腩","style":"家常","taste":["酸甜","咸鲜"],"cost":55,"ingredients":["牛腩","番茄","洋葱","生抽","老抽","料酒","生姜","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E7%95%AA%E8%8C%84%E7%89%9B%E8%85%A9"},{"name":"香菇炒肉片","style":"家常","taste":["咸鲜"],"cost":25,"ingredients":["猪里脊","香菇","葱","生姜","生抽","蚝油","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E9%A6%99%E8%8F%87%E7%82%92%E8%82%89%E7%89%87"},{"name":"红烧茄子","style":"家常","taste":["咸鲜","微辣"],"cost":12,"ingredients":["茄子","大蒜","生抽","老抽","白糖","干辣椒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E8%8C%84%E5%AD%90"},{"name":"手撕包菜","style":"家常","taste":["香辣","咸鲜"],"cost":8,"ingredients":["包菜","干辣椒","大蒜","生抽","米醋","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%89%8B%E6%92%95%E5%8C%85%E8%8F%9C"},{"name":"地三鲜","style":"家常","taste":["咸鲜"],"cost":18,"ingredients":["土豆","茄子","青椒","大蒜","生抽","老抽","白糖","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9C%B0%E4%B8%89%E9%B2%9C"},{"name":"蚂蚁上树","style":"家常","taste":["微辣","咸鲜"],"cost":18,"ingredients":["粉条","猪里脊","豆瓣酱","葱","生姜","大蒜","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E8%9A%82%E8%9A%81%E4%B8%8A%E6%A0%91"},{"name":"芹菜炒肉丝","style":"家常","taste":["咸鲜"],"cost":20,"ingredients":["芹菜","猪里脊","大蒜","生抽","淀粉","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8A%B9%E8%8F%9C%E7%82%92%E8%82%89%E4%B8%9D"},{"name":"酸辣土豆丝","style":"家常","taste":["酸辣"],"cost":8,"ingredients":["土豆","干辣椒","米醋","大蒜","花椒","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%BE%A3%E5%9C%9F%E8%B1%86%E4%B8%9D"},{"name":"青椒肉丝","style":"家常","taste":["咸鲜","微辣"],"cost":22,"ingredients":["猪里脊","青椒","生抽","淀粉","盐","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E9%9D%92%E6%A4%92%E8%82%89%E4%B8%9D"},{"name":"土豆炖牛肉","style":"家常","taste":["咸鲜"],"cost":50,"ingredients":["牛腩","土豆","胡萝卜","洋葱","生抽","老抽","料酒","生姜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9C%9F%E8%B1%86%E7%82%96%E7%89%9B%E8%82%89"},{"name":"红烧猪蹄","style":"家常","taste":["咸鲜","甜口"],"cost":40,"ingredients":["猪蹄","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E7%8C%AA%E8%B9%84"},{"name":"粉蒸肉","style":"家常","taste":["咸鲜","香辣"],"cost":35,"ingredients":["五花肉","大米","豆瓣酱","生抽","料酒","生姜","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B2%89%E8%92%B8%E8%82%89"},{"name":"剁椒鱼头","style":"家常","taste":["香辣","咸鲜"],"cost":45,"ingredients":["鱼头（花鲢）","剁椒","大蒜","生姜","葱","生抽","料酒","蚝油"],"url":"https://www.xiachufang.com/search/?keyword=%E5%89%81%E6%A4%92%E9%B1%BC%E5%A4%B4"},{"name":"酸菜鱼","style":"家常","taste":["酸辣"],"cost":40,"ingredients":["草鱼","酸菜","干辣椒","花椒","生姜","大蒜","葱","鸡蛋","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%8F%9C%E9%B1%BC"},{"name":"毛血旺","style":"家常","taste":["重辣","麻辣"],"cost":45,"ingredients":["鸭血","午餐肉","豆芽","木耳","豆瓣酱","干辣椒","花椒","大蒜","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%AF%9B%E8%A1%80%E6%97%BA"},{"name":"红烧鱼","style":"家常","taste":["咸鲜","微辣"],"cost":30,"ingredients":["鲤鱼","生抽","老抽","白糖","料酒","生姜","葱","大蒜","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E9%B1%BC"},{"name":"糖醋鲤鱼","style":"家常","taste":["酸甜"],"cost":35,"ingredients":["鲤鱼","白糖","米醋","番茄","淀粉","生抽","料酒","葱","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B3%96%E9%86%8B%E9%B2%A4%E9%B1%BC"},{"name":"清炖排骨","style":"家常","taste":["清淡","咸鲜"],"cost":40,"ingredients":["猪排骨","生姜","葱","料酒","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B8%85%E7%82%96%E6%8E%92%E9%AA%A8"},{"name":"土豆烧牛肉","style":"家常","taste":["咸鲜"],"cost":50,"ingredients":["牛腩","土豆","生抽","老抽","白糖","料酒","生姜","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9C%9F%E8%B1%86%E7%83%A7%E7%89%9B%E8%82%89"},{"name":"红烧鸡腿","style":"家常","taste":["咸鲜","甜口"],"cost":25,"ingredients":["鸡腿","生抽","老抽","白糖","料酒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E9%B8%A1%E8%85%BF"},{"name":"葱烧豆腐","style":"家常","taste":["咸鲜"],"cost":10,"ingredients":["老豆腐","葱","生抽","老抽","白糖","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E8%91%B1%E7%83%A7%E8%B1%86%E8%85%90"},{"name":"虾仁炒鸡蛋","style":"家常","taste":["清淡","咸鲜"],"cost":30,"ingredients":["鲜虾","鸡蛋","葱","盐","料酒","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E8%99%BE%E4%BB%81%E7%82%92%E9%B8%A1%E8%9B%8B"},{"name":"韭菜炒鸡蛋","style":"家常","taste":["咸鲜"],"cost":10,"ingredients":["韭菜","鸡蛋","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%9F%AD%E8%8F%9C%E7%82%92%E9%B8%A1%E8%9B%8B"},{"name":"家常炒鸡","style":"家常","taste":["咸鲜","微辣"],"cost":30,"ingredients":["整鸡","青椒","生姜","大蒜","生抽","老抽","料酒","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%AE%B6%E5%B8%B8%E7%82%92%E9%B8%A1"},{"name":"椒盐排骨","style":"家常","taste":["咸鲜"],"cost":45,"ingredients":["猪排骨","花椒","盐","淀粉","鸡蛋","料酒","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A4%92%E7%9B%90%E6%8E%92%E9%AA%A8"},{"name":"蛋炒饭","style":"家常","taste":["咸鲜"],"cost":8,"ingredients":["大米","鸡蛋","葱","盐","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E8%9B%8B%E7%82%92%E9%A5%AD"},{"name":"啤酒鸭","style":"家常","taste":["咸鲜","微辣"],"cost":40,"ingredients":["鸭腿","啤酒","生姜","大蒜","干辣椒","生抽","老抽","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%95%A4%E9%85%92%E9%B8%AD"},{"name":"红烧猪肝","style":"家常","taste":["咸鲜","微辣"],"cost":20,"ingredients":["猪肝","生抽","老抽","料酒","生姜","葱","大蒜","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E7%8C%AA%E8%82%9D"},{"name":"凉拌黄瓜","style":"家常","taste":["清淡","酸辣"],"cost":6,"ingredients":["黄瓜","大蒜","米醋","生抽","香油","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%87%89%E6%8B%8C%E9%BB%84%E7%93%9C"},{"name":"凉拌木耳","style":"家常","taste":["酸辣","咸鲜"],"cost":10,"ingredients":["木耳","大蒜","米醋","生抽","干辣椒","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%87%89%E6%8B%8C%E6%9C%A8%E8%80%B3"},{"name":"皮蛋豆腐","style":"家常","taste":["清淡","咸鲜"],"cost":12,"ingredients":["嫩豆腐","皮蛋","葱","生抽","香油","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%9A%AE%E8%9B%8B%E8%B1%86%E8%85%90"},{"name":"茄汁蘑菇","style":"家常","taste":["酸甜","咸鲜"],"cost":15,"ingredients":["平菇","番茄","大蒜","生抽","白糖","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8C%84%E6%B1%81%E8%98%91%E8%8F%87"},{"name":"酱牛肉","style":"家常","taste":["咸鲜"],"cost":60,"ingredients":["牛腱","生抽","老抽","料酒","生姜","葱","大蒜","八角","桂皮","花椒","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B1%E7%89%9B%E8%82%89"},{"name":"卤猪蹄","style":"家常","taste":["咸鲜","甜口"],"cost":40,"ingredients":["猪蹄","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E7%8C%AA%E8%B9%84"},{"name":"白菜炖粉条","style":"家常","taste":["清淡","咸鲜"],"cost":12,"ingredients":["白菜","粉条","猪里脊","生姜","盐","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E7%99%BD%E8%8F%9C%E7%82%96%E7%B2%89%E6%9D%A1"},{"name":"猪肉炖粉条","style":"家常","taste":["咸鲜"],"cost":30,"ingredients":["五花肉","粉条","大蒜","生抽","老抽","料酒","生姜","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E7%8C%AA%E8%82%89%E7%82%96%E7%B2%89%E6%9D%A1"},{"name":"土豆炖鸡","style":"家常","taste":["咸鲜"],"cost":35,"ingredients":["整鸡","土豆","胡萝卜","生抽","老抽","料酒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9C%9F%E8%B1%86%E7%82%96%E9%B8%A1"},{"name":"西蓝花炒虾仁","style":"家常","taste":["清淡","咸鲜"],"cost":35,"ingredients":["西蓝花","鲜虾","大蒜","生抽","蚝油","淀粉","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%A5%BF%E8%93%9D%E8%8A%B1%E7%82%92%E8%99%BE%E4%BB%81"},{"name":"番茄蛋花汤","style":"家常","taste":["清淡","酸甜"],"cost":8,"ingredients":["番茄","鸡蛋","葱","盐","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E7%95%AA%E8%8C%84%E8%9B%8B%E8%8A%B1%E6%B1%A4"},{"name":"玉米排骨汤","style":"家常","taste":["清淡","甜口"],"cost":40,"ingredients":["猪排骨","玉米","胡萝卜","生姜","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E7%8E%89%E7%B1%B3%E6%8E%92%E9%AA%A8%E6%B1%A4"},{"name":"冬瓜排骨汤","style":"家常","taste":["清淡","咸鲜"],"cost":35,"ingredients":["猪排骨","冬瓜","生姜","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%AC%E7%93%9C%E6%8E%92%E9%AA%A8%E6%B1%A4"},{"name":"酸辣汤","style":"家常","taste":["酸辣"],"cost":15,"ingredients":["嫩豆腐","木耳","鸡蛋","米醋","白胡椒","生抽","淀粉","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%BE%A3%E6%B1%A4"},{"name":"紫菜蛋花汤","style":"家常","taste":["清淡","咸鲜"],"cost":8,"ingredients":["紫菜","鸡蛋","葱","香油","盐","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B4%AB%E8%8F%9C%E8%9B%8B%E8%8A%B1%E6%B1%A4"},{"name":"皮蛋瘦肉粥","style":"家常","taste":["清淡","咸鲜"],"cost":15,"ingredients":["大米","皮蛋","猪里脊","生姜","葱","盐","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%9A%AE%E8%9B%8B%E7%98%A6%E8%82%89%E7%B2%A5"},{"name":"老鸭汤","style":"家常","taste":["清淡","咸鲜"],"cost":55,"ingredients":["鸭腿","生姜","葱","料酒","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%80%81%E9%B8%AD%E6%B1%A4"},{"name":"萝卜炖牛腩","style":"家常","taste":["咸鲜"],"cost":55,"ingredients":["牛腩","白萝卜","生姜","葱","生抽","老抽","料酒","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E8%90%9D%E5%8D%9C%E7%82%96%E7%89%9B%E8%85%A9"},{"name":"麻婆豆腐","style":"川菜","taste":["麻辣","咸鲜"],"cost":15,"ingredients":["嫩豆腐","猪里脊","豆瓣酱","豆豉","干辣椒","花椒","大蒜","生姜","葱","生抽","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BA%BB%E5%A9%86%E8%B1%86%E8%85%90"},{"name":"回锅肉","style":"川菜","taste":["香辣","咸鲜"],"cost":30,"ingredients":["五花肉","青椒","豆瓣酱","豆豉","生抽","白糖","大蒜","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9B%9E%E9%94%85%E8%82%89"},{"name":"宫保鸡丁","style":"川菜","taste":["香辣","酸甜"],"cost":28,"ingredients":["鸡胸","干辣椒","花椒","花生","葱","生姜","大蒜","生抽","米醋","白糖","淀粉","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%AE%AB%E4%BF%9D%E9%B8%A1%E4%B8%81"},{"name":"鱼香肉丝","style":"川菜","taste":["酸辣","咸鲜"],"cost":25,"ingredients":["猪里脊","木耳","胡萝卜","豆瓣酱","葱","生姜","大蒜","生抽","米醋","白糖","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E9%B1%BC%E9%A6%99%E8%82%89%E4%B8%9D"},{"name":"夫妻肺片","style":"川菜","taste":["麻辣","咸鲜"],"cost":40,"ingredients":["牛腱","牛百叶","牛舌","干辣椒","花椒","生抽","米醋","白糖","芝麻","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A4%AB%E5%A6%BB%E8%82%BA%E7%89%87"},{"name":"辣子鸡","style":"川菜","taste":["重辣","香辣"],"cost":35,"ingredients":["整鸡","干辣椒","花椒","大蒜","生姜","生抽","料酒","白糖","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%BE%A3%E5%AD%90%E9%B8%A1"},{"name":"水煮肉片","style":"川菜","taste":["重辣","麻辣"],"cost":35,"ingredients":["猪里脊","豆芽","豆瓣酱","干辣椒","花椒","大蒜","生姜","生抽","淀粉","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B0%B4%E7%85%AE%E8%82%89%E7%89%87"},{"name":"干煸四季豆","style":"川菜","taste":["香辣","咸鲜"],"cost":15,"ingredients":["豆角","猪里脊","干辣椒","大蒜","生姜","豆豉","生抽","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B9%B2%E7%85%B8%E5%9B%9B%E5%AD%A3%E8%B1%86"},{"name":"蒜泥白肉","style":"川菜","taste":["香辣","咸鲜"],"cost":28,"ingredients":["五花肉","大蒜","干辣椒","生抽","米醋","白糖","香油","葱","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E6%B3%A5%E7%99%BD%E8%82%89"},{"name":"口水鸡","style":"川菜","taste":["麻辣","香辣"],"cost":30,"ingredients":["整鸡","干辣椒","花椒","大蒜","生姜","生抽","米醋","白糖","芝麻","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8F%A3%E6%B0%B4%E9%B8%A1"},{"name":"锅包肉","style":"川菜","taste":["酸甜"],"cost":30,"ingredients":["猪里脊","淀粉","米醋","白糖","番茄","葱","生姜","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E9%94%85%E5%8C%85%E8%82%89"},{"name":"泡椒凤爪","style":"川菜","taste":["酸辣"],"cost":20,"ingredients":["鸡爪","泡椒","米醋","白糖","大蒜","生姜","花椒","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%A1%E6%A4%92%E5%87%A4%E7%88%AA"},{"name":"棒棒鸡","style":"川菜","taste":["麻辣","咸鲜"],"cost":28,"ingredients":["鸡胸","干辣椒","花椒","芝麻酱","生抽","米醋","白糖","大蒜","葱","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A3%92%E6%A3%92%E9%B8%A1"},{"name":"水煮鱼","style":"川菜","taste":["重辣","麻辣"],"cost":40,"ingredients":["草鱼","豆芽","豆瓣酱","干辣椒","花椒","大蒜","生姜","葱","鸡蛋","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B0%B4%E7%85%AE%E9%B1%BC"},{"name":"红油抄手","style":"川菜","taste":["麻辣","香辣"],"cost":18,"ingredients":["猪里脊","面条","干辣椒","花椒","生抽","米醋","白糖","大蒜","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E6%B2%B9%E6%8A%84%E6%89%8B"},{"name":"鱼香茄子","style":"川菜","taste":["酸辣","咸鲜"],"cost":18,"ingredients":["茄子","猪里脊","豆瓣酱","葱","生姜","大蒜","生抽","米醋","白糖","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E9%B1%BC%E9%A6%99%E8%8C%84%E5%AD%90"},{"name":"麻辣香锅","style":"川菜","taste":["麻辣","重辣"],"cost":55,"ingredients":["鸡翅","鲜虾","豆腐","土豆","莲藕","木耳","豆瓣酱","干辣椒","花椒","大蒜","生姜","葱","白糖","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BA%BB%E8%BE%A3%E9%A6%99%E9%94%85"},{"name":"香辣虾","style":"川菜","taste":["重辣","香辣"],"cost":50,"ingredients":["鲜虾","干辣椒","花椒","大蒜","生姜","葱","生抽","白糖","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%A6%99%E8%BE%A3%E8%99%BE"},{"name":"尖椒炒牛肉","style":"川菜","taste":["香辣","咸鲜"],"cost":40,"ingredients":["牛里脊","尖椒","大蒜","生姜","生抽","蚝油","淀粉","料酒","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B0%96%E6%A4%92%E7%82%92%E7%89%9B%E8%82%89"},{"name":"子姜鸭","style":"川菜","taste":["香辣","咸鲜"],"cost":40,"ingredients":["鸭腿","子姜","青椒","豆瓣酱","大蒜","生抽","料酒","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%AD%90%E5%A7%9C%E9%B8%AD"},{"name":"泡椒炒肉丝","style":"川菜","taste":["酸辣","咸鲜"],"cost":25,"ingredients":["猪里脊","泡椒","大蒜","生姜","生抽","淀粉","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%A1%E6%A4%92%E7%82%92%E8%82%89%E4%B8%9D"},{"name":"干锅花菜","style":"川菜","taste":["香辣","咸鲜"],"cost":20,"ingredients":["西蓝花","五花肉","干辣椒","豆瓣酱","大蒜","生姜","生抽","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B9%B2%E9%94%85%E8%8A%B1%E8%8F%9C"},{"name":"干锅土豆片","style":"川菜","taste":["香辣","咸鲜"],"cost":18,"ingredients":["土豆","五花肉","干辣椒","豆瓣酱","大蒜","生姜","生抽","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B9%B2%E9%94%85%E5%9C%9F%E8%B1%86%E7%89%87"},{"name":"灯影牛肉","style":"川菜","taste":["麻辣","香辣"],"cost":50,"ingredients":["牛里脊","干辣椒","花椒","生抽","白糖","料酒","生姜","芝麻","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E7%81%AF%E5%BD%B1%E7%89%9B%E8%82%89"},{"name":"辣子鸡丁","style":"川菜","taste":["重辣","香辣"],"cost":30,"ingredients":["鸡胸","干辣椒","花椒","大蒜","生姜","生抽","料酒","白糖","淀粉","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%BE%A3%E5%AD%90%E9%B8%A1%E4%B8%81"},{"name":"东坡肘子","style":"川菜","taste":["咸鲜","甜口"],"cost":70,"ingredients":["猪蹄","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%9C%E5%9D%A1%E8%82%98%E5%AD%90"},{"name":"钵钵鸡","style":"川菜","taste":["麻辣","香辣"],"cost":35,"ingredients":["整鸡","干辣椒","花椒","大蒜","生抽","米醋","白糖","芝麻","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%92%B5%E9%92%B5%E9%B8%A1"},{"name":"麻辣小龙虾","style":"川菜","taste":["重辣","麻辣"],"cost":65,"ingredients":["小龙虾","干辣椒","花椒","豆瓣酱","大蒜","生姜","葱","生抽","白糖","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BA%BB%E8%BE%A3%E5%B0%8F%E9%BE%99%E8%99%BE"},{"name":"火爆腰花","style":"川菜","taste":["香辣","咸鲜"],"cost":25,"ingredients":["猪腰","青椒","干辣椒","大蒜","生姜","生抽","米醋","淀粉","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%81%AB%E7%88%86%E8%85%B0%E8%8A%B1"},{"name":"酱爆肉丁","style":"川菜","taste":["咸鲜","甜口"],"cost":28,"ingredients":["猪里脊","黄瓜","豆瓣酱","大蒜","生姜","生抽","白糖","淀粉","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B1%E7%88%86%E8%82%89%E4%B8%81"},{"name":"粉蒸排骨","style":"川菜","taste":["咸鲜","香辣"],"cost":40,"ingredients":["猪排骨","大米","豆瓣酱","生抽","料酒","生姜","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B2%89%E8%92%B8%E6%8E%92%E9%AA%A8"},{"name":"红油凉粉","style":"川菜","taste":["麻辣","酸辣"],"cost":10,"ingredients":["粉条","干辣椒","花椒","大蒜","生抽","米醋","白糖","香油","葱","芝麻"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E6%B2%B9%E5%87%89%E7%B2%89"},{"name":"叫花鸡","style":"川菜","taste":["咸鲜","香辣"],"cost":45,"ingredients":["整鸡","豆瓣酱","生抽","料酒","生姜","葱","大蒜","八角","桂皮","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8F%AB%E8%8A%B1%E9%B8%A1"},{"name":"盆盆虾","style":"川菜","taste":["重辣","麻辣"],"cost":55,"ingredients":["鲜虾","干辣椒","花椒","大蒜","生姜","生抽","白糖","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%9B%86%E7%9B%86%E8%99%BE"},{"name":"卤猪耳","style":"川菜","taste":["咸鲜","麻辣"],"cost":25,"ingredients":["猪耳","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","花椒","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E7%8C%AA%E8%80%B3"},{"name":"虎皮青椒","style":"川菜","taste":["香辣","咸鲜"],"cost":10,"ingredients":["尖椒","大蒜","生抽","米醋","白糖","豆豉"],"url":"https://www.xiachufang.com/search/?keyword=%E8%99%8E%E7%9A%AE%E9%9D%92%E6%A4%92"},{"name":"擂椒皮蛋","style":"川菜","taste":["香辣","咸鲜"],"cost":15,"ingredients":["皮蛋","尖椒","大蒜","生抽","米醋","香油","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%93%82%E6%A4%92%E7%9A%AE%E8%9B%8B"},{"name":"豆花","style":"川菜","taste":["麻辣","咸鲜"],"cost":12,"ingredients":["嫩豆腐","豆瓣酱","干辣椒","花椒","大蒜","生抽","白糖","葱","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%86%E8%8A%B1"},{"name":"跷脚牛肉","style":"川菜","taste":["麻辣","咸鲜"],"cost":45,"ingredients":["牛腱","牛百叶","豆腐","木耳","豆瓣酱","干辣椒","花椒","大蒜","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B7%B7%E8%84%9A%E7%89%9B%E8%82%89"},{"name":"酸辣鱼","style":"川菜","taste":["酸辣"],"cost":38,"ingredients":["草鱼","泡椒","酸菜","干辣椒","花椒","大蒜","生姜","葱","淀粉","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%BE%A3%E9%B1%BC"},{"name":"折耳根拌肉","style":"川菜","taste":["香辣","酸辣"],"cost":20,"ingredients":["折耳根","猪里脊","干辣椒","大蒜","米醋","生抽","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%8A%98%E8%80%B3%E6%A0%B9%E6%8B%8C%E8%82%89"},{"name":"回锅豆腐","style":"川菜","taste":["香辣","咸鲜"],"cost":12,"ingredients":["老豆腐","豆瓣酱","豆豉","葱","大蒜","生姜","生抽","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9B%9E%E9%94%85%E8%B1%86%E8%85%90"},{"name":"泡菜炒肉","style":"川菜","taste":["酸辣","咸鲜"],"cost":25,"ingredients":["五花肉","泡菜","大蒜","生姜","生抽","白糖","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%A1%E8%8F%9C%E7%82%92%E8%82%89"},{"name":"怪味鸡","style":"川菜","taste":["麻辣","酸甜"],"cost":30,"ingredients":["整鸡","干辣椒","花椒","芝麻酱","生抽","米醋","白糖","大蒜","葱","香油","芝麻"],"url":"https://www.xiachufang.com/search/?keyword=%E6%80%AA%E5%91%B3%E9%B8%A1"},{"name":"开水白菜","style":"川菜","taste":["清淡","咸鲜"],"cost":25,"ingredients":["白菜","鸡骨","火腿","生姜","葱","盐","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%BC%80%E6%B0%B4%E7%99%BD%E8%8F%9C"},{"name":"麻辣烫","style":"川菜","taste":["麻辣","重辣"],"cost":35,"ingredients":["豆腐","木耳","豆芽","鸡蛋","鲜虾","午餐肉","粉条","豆瓣酱","干辣椒","花椒","大蒜","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BA%BB%E8%BE%A3%E7%83%AB"},{"name":"冷锅串串","style":"川菜","taste":["麻辣","香辣"],"cost":40,"ingredients":["鸡翅","豆腐","木耳","莲藕","干辣椒","花椒","豆瓣酱","大蒜","生姜","生抽","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%B7%E9%94%85%E4%B8%B2%E4%B8%B2"},{"name":"铁板葱香牛肉","style":"川菜","taste":["咸鲜","香辣"],"cost":45,"ingredients":["牛里脊","洋葱","葱","生抽","蚝油","淀粉","料酒","生姜","干辣椒","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E9%93%81%E6%9D%BF%E8%91%B1%E9%A6%99%E7%89%9B%E8%82%89"},{"name":"麻辣兔头","style":"川菜","taste":["重辣","麻辣"],"cost":30,"ingredients":["兔头","豆瓣酱","干辣椒","花椒","大蒜","生姜","生抽","白糖","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BA%BB%E8%BE%A3%E5%85%94%E5%A4%B4"},{"name":"酸辣猪血","style":"川菜","taste":["酸辣"],"cost":15,"ingredients":["鸭血","酸菜","干辣椒","花椒","大蒜","生姜","葱","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%BE%A3%E7%8C%AA%E8%A1%80"},{"name":"蒜蓉炒通菜","style":"川菜","taste":["清淡","咸鲜"],"cost":10,"ingredients":["空心菜","大蒜","盐","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E8%93%89%E7%82%92%E9%80%9A%E8%8F%9C"},{"name":"清蒸鱼","style":"粤菜","taste":["清淡","咸鲜"],"cost":40,"ingredients":["鲈鱼","生姜","葱","生抽","蚝油","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B8%85%E8%92%B8%E9%B1%BC"},{"name":"白灼虾","style":"粤菜","taste":["清淡","咸鲜"],"cost":50,"ingredients":["鲜虾","生姜","葱","生抽","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E7%99%BD%E7%81%BC%E8%99%BE"},{"name":"蒸水蛋","style":"粤菜","taste":["清淡","咸鲜"],"cost":8,"ingredients":["鸡蛋","生抽","香油","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%B8%E6%B0%B4%E8%9B%8B"},{"name":"姜葱炒蟹","style":"粤菜","taste":["咸鲜"],"cost":80,"ingredients":["花蟹","生姜","葱","大蒜","料酒","生抽","淀粉","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A7%9C%E8%91%B1%E7%82%92%E8%9F%B9"},{"name":"蚝油生菜","style":"粤菜","taste":["清淡","咸鲜"],"cost":10,"ingredients":["生菜","大蒜","蚝油","生抽","淀粉","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%9A%9D%E6%B2%B9%E7%94%9F%E8%8F%9C"},{"name":"盐焗鸡","style":"粤菜","taste":["咸鲜"],"cost":40,"ingredients":["整鸡","粗盐","生姜","葱","沙姜粉","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%9B%90%E7%84%97%E9%B8%A1"},{"name":"蒜蓉粉丝蒸虾","style":"粤菜","taste":["清淡","咸鲜"],"cost":55,"ingredients":["鲜虾","粉丝","大蒜","生抽","蚝油","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E8%93%89%E7%B2%89%E4%B8%9D%E8%92%B8%E8%99%BE"},{"name":"白灼菜心","style":"粤菜","taste":["清淡","咸鲜"],"cost":10,"ingredients":["菜心","大蒜","生抽","蚝油","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E7%99%BD%E7%81%BC%E8%8F%9C%E5%BF%83"},{"name":"白切鸡","style":"粤菜","taste":["清淡","咸鲜"],"cost":40,"ingredients":["整鸡","生姜","葱","盐","料酒","香油","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E7%99%BD%E5%88%87%E9%B8%A1"},{"name":"豉汁蒸排骨","style":"粤菜","taste":["咸鲜"],"cost":35,"ingredients":["猪排骨","豆豉","大蒜","生抽","料酒","淀粉","白糖","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%89%E6%B1%81%E8%92%B8%E6%8E%92%E9%AA%A8"},{"name":"萝卜牛腩煲","style":"粤菜","taste":["咸鲜"],"cost":60,"ingredients":["牛腩","白萝卜","生抽","老抽","料酒","生姜","葱","大蒜","八角","桂皮"],"url":"https://www.xiachufang.com/search/?keyword=%E8%90%9D%E5%8D%9C%E7%89%9B%E8%85%A9%E7%85%B2"},{"name":"清蒸大闸蟹","style":"粤菜","taste":["清淡","咸鲜"],"cost":120,"ingredients":["大闸蟹","生姜","米醋","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B8%85%E8%92%B8%E5%A4%A7%E9%97%B8%E8%9F%B9"},{"name":"蚝油牛肉","style":"粤菜","taste":["咸鲜"],"cost":45,"ingredients":["牛里脊","蚝油","生抽","料酒","淀粉","生姜","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E8%9A%9D%E6%B2%B9%E7%89%9B%E8%82%89"},{"name":"椒盐濑尿虾","style":"粤菜","taste":["咸鲜"],"cost":80,"ingredients":["濑尿虾","花椒","盐","大蒜","葱","干辣椒","淀粉","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A4%92%E7%9B%90%E6%BF%91%E5%B0%BF%E8%99%BE"},{"name":"避风塘炒蟹","style":"粤菜","taste":["香辣","咸鲜"],"cost":90,"ingredients":["花蟹","大蒜","干辣椒","豆豉","面包糠","葱","料酒","盐","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E9%81%BF%E9%A3%8E%E5%A1%98%E7%82%92%E8%9F%B9"},{"name":"豉椒炒蛤蜊","style":"粤菜","taste":["咸鲜","微辣"],"cost":30,"ingredients":["花甲","豆豉","青椒","大蒜","生姜","生抽","料酒","白糖","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%89%E6%A4%92%E7%82%92%E8%9B%A4%E8%9C%8A"},{"name":"豆豉鲮鱼炒油麦菜","style":"粤菜","taste":["咸鲜"],"cost":20,"ingredients":["油麦菜","豆豉鲮鱼罐头","大蒜","生抽","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%86%E8%B1%89%E9%B2%AE%E9%B1%BC%E7%82%92%E6%B2%B9%E9%BA%A6%E8%8F%9C"},{"name":"粉丝蒸扇贝","style":"粤菜","taste":["清淡","咸鲜"],"cost":60,"ingredients":["扇贝","粉丝","大蒜","生抽","香油","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B2%89%E4%B8%9D%E8%92%B8%E6%89%87%E8%B4%9D"},{"name":"蒸猪肉饼","style":"粤菜","taste":["咸鲜"],"cost":25,"ingredients":["猪里脊","生抽","料酒","淀粉","盐","生姜","葱","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%B8%E7%8C%AA%E8%82%89%E9%A5%BC"},{"name":"腊味煲仔饭","style":"粤菜","taste":["咸鲜"],"cost":35,"ingredients":["大米","腊肠","腊肉","鸡蛋","生抽","老抽","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%85%8A%E5%91%B3%E7%85%B2%E4%BB%94%E9%A5%AD"},{"name":"砂锅猪肚鸡","style":"粤菜","taste":["清淡","咸鲜"],"cost":65,"ingredients":["整鸡","猪肚","生姜","葱","白胡椒","盐","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%A0%82%E9%94%85%E7%8C%AA%E8%82%9A%E9%B8%A1"},{"name":"莲藕花生猪骨汤","style":"粤菜","taste":["清淡","甜口"],"cost":40,"ingredients":["猪排骨","莲藕","花生","生姜","盐","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8E%B2%E8%97%95%E8%8A%B1%E7%94%9F%E7%8C%AA%E9%AA%A8%E6%B1%A4"},{"name":"冬菇焖鸡","style":"粤菜","taste":["咸鲜"],"cost":38,"ingredients":["整鸡","香菇","生抽","老抽","料酒","白糖","生姜","葱","大蒜","蚝油"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%AC%E8%8F%87%E7%84%96%E9%B8%A1"},{"name":"红烧乳鸽","style":"粤菜","taste":["咸鲜","甜口"],"cost":55,"ingredients":["乳鸽","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E4%B9%B3%E9%B8%BD"},{"name":"脆皮烧鹅","style":"粤菜","taste":["咸鲜"],"cost":80,"ingredients":["鹅肉","麦芽糖","生抽","老抽","料酒","生姜","葱","大蒜","五香粉","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E8%84%86%E7%9A%AE%E7%83%A7%E9%B9%85"},{"name":"肠粉","style":"粤菜","taste":["清淡","咸鲜"],"cost":18,"ingredients":["粘米粉","淀粉","鸡蛋","猪里脊","鲜虾","生抽","蚝油","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%82%A0%E7%B2%89"},{"name":"叉烧","style":"粤菜","taste":["甜口","咸鲜"],"cost":40,"ingredients":["猪里脊","麦芽糖","生抽","老抽","料酒","白糖","蚝油","大蒜","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8F%89%E7%83%A7"},{"name":"白云猪手","style":"粤菜","taste":["酸甜"],"cost":45,"ingredients":["猪蹄","米醋","白糖","盐","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%99%BD%E4%BA%91%E7%8C%AA%E6%89%8B"},{"name":"鱼片粥","style":"粤菜","taste":["清淡","咸鲜"],"cost":25,"ingredients":["大米","鲈鱼","生姜","葱","盐","香油","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%B1%BC%E7%89%87%E7%B2%A5"},{"name":"及第粥","style":"粤菜","taste":["清淡","咸鲜"],"cost":30,"ingredients":["大米","猪肝","猪腰","猪里脊","生姜","葱","盐","香油","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8F%8A%E7%AC%AC%E7%B2%A5"},{"name":"艇仔粥","style":"粤菜","taste":["清淡","咸鲜"],"cost":28,"ingredients":["大米","鱿鱼","鲜虾","猪里脊","鸡蛋","生姜","葱","盐","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E8%89%87%E4%BB%94%E7%B2%A5"},{"name":"冬瓜盅","style":"粤菜","taste":["清淡","咸鲜"],"cost":55,"ingredients":["冬瓜","鸡肉","香菇","火腿","生姜","葱","盐","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%AC%E7%93%9C%E7%9B%85"},{"name":"酿豆腐","style":"粤菜","taste":["咸鲜"],"cost":25,"ingredients":["老豆腐","猪里脊","鲜虾","生抽","蚝油","淀粉","盐","葱","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%BF%E8%B1%86%E8%85%90"},{"name":"梅菜扣肉","style":"粤菜","taste":["咸鲜"],"cost":40,"ingredients":["五花肉","梅干菜","生抽","老抽","白糖","料酒","生姜","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A2%85%E8%8F%9C%E6%89%A3%E8%82%89"},{"name":"干炒牛河","style":"粤菜","taste":["咸鲜"],"cost":35,"ingredients":["牛里脊","河粉","豆芽","葱","生抽","老抽","蚝油","料酒","淀粉","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B9%B2%E7%82%92%E7%89%9B%E6%B2%B3"},{"name":"虾饺","style":"粤菜","taste":["清淡","咸鲜"],"cost":35,"ingredients":["鲜虾","澄面","淀粉","猪里脊","生抽","蚝油","白糖","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%99%BE%E9%A5%BA"},{"name":"姜葱捞鸡","style":"粤菜","taste":["清淡","咸鲜"],"cost":40,"ingredients":["整鸡","生姜","葱","盐","香油","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A7%9C%E8%91%B1%E6%8D%9E%E9%B8%A1"},{"name":"啫啫排骨","style":"粤菜","taste":["咸鲜"],"cost":40,"ingredients":["猪排骨","豆豉","大蒜","生抽","蚝油","白糖","料酒","淀粉","生姜","葱","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%95%AB%E5%95%AB%E6%8E%92%E9%AA%A8"},{"name":"清蒸虾","style":"粤菜","taste":["清淡","咸鲜"],"cost":50,"ingredients":["鲜虾","生姜","葱","盐","料酒","生抽","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B8%85%E8%92%B8%E8%99%BE"},{"name":"麒麟鱼","style":"粤菜","taste":["清淡","咸鲜"],"cost":50,"ingredients":["鲈鱼","香菇","火腿","生姜","葱","生抽","蚝油","淀粉","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BA%92%E9%BA%9F%E9%B1%BC"},{"name":"凉拌猪耳","style":"粤菜","taste":["咸鲜","香辣"],"cost":20,"ingredients":["猪耳","大蒜","干辣椒","米醋","生抽","香油","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%87%89%E6%8B%8C%E7%8C%AA%E8%80%B3"},{"name":"豆腐花","style":"粤菜","taste":["清淡","甜口"],"cost":8,"ingredients":["黄豆","白糖","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%86%E8%85%90%E8%8A%B1"},{"name":"蜜汁叉烧","style":"粤菜","taste":["甜口","咸鲜"],"cost":45,"ingredients":["猪里脊","麦芽糖","蜂蜜","生抽","老抽","料酒","白糖","大蒜","生姜","蚝油"],"url":"https://www.xiachufang.com/search/?keyword=%E8%9C%9C%E6%B1%81%E5%8F%89%E7%83%A7"},{"name":"姜葱炒花蟹","style":"粤菜","taste":["咸鲜"],"cost":80,"ingredients":["花蟹","生姜","葱","大蒜","料酒","生抽","盐","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A7%9C%E8%91%B1%E7%82%92%E8%8A%B1%E8%9F%B9"},{"name":"蒸鱼腩","style":"粤菜","taste":["清淡","咸鲜"],"cost":30,"ingredients":["草鱼","生姜","葱","生抽","蚝油","香油","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%B8%E9%B1%BC%E8%85%A9"},{"name":"粤式蒸排骨","style":"粤菜","taste":["咸鲜"],"cost":35,"ingredients":["猪排骨","豆豉","大蒜","生抽","蚝油","淀粉","料酒","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B2%A4%E5%BC%8F%E8%92%B8%E6%8E%92%E9%AA%A8"},{"name":"清补凉汤","style":"粤菜","taste":["清淡","甜口"],"cost":30,"ingredients":["莲子","百合","薏米","红枣","枸杞","生姜","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B8%85%E8%A1%A5%E5%87%89%E6%B1%A4"},{"name":"粤式炒面","style":"粤菜","taste":["咸鲜"],"cost":25,"ingredients":["面条","豆芽","韭黄","猪里脊","生抽","老抽","蚝油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B2%A4%E5%BC%8F%E7%82%92%E9%9D%A2"},{"name":"红烧大肠","style":"粤菜","taste":["咸鲜","微辣"],"cost":30,"ingredients":["猪大肠","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E5%A4%A7%E8%82%A0"},{"name":"潮汕牛肉火锅","style":"潮汕","taste":["清淡","咸鲜"],"cost":120,"ingredients":["牛里脊","牛腱","牛百叶","白萝卜","生姜","葱","沙茶酱","生抽","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E6%B1%95%E7%89%9B%E8%82%89%E7%81%AB%E9%94%85"},{"name":"卤鹅","style":"潮汕","taste":["咸鲜"],"cost":90,"ingredients":["鹅肉","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","南姜","芫荽"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E9%B9%85"},{"name":"潮汕砂锅粥","style":"潮汕","taste":["清淡","咸鲜"],"cost":45,"ingredients":["大米","鲜虾","花蟹","生姜","葱","盐","香菜","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E6%B1%95%E7%A0%82%E9%94%85%E7%B2%A5"},{"name":"炒薄壳","style":"潮汕","taste":["香辣","咸鲜"],"cost":30,"ingredients":["薄壳","金不换","大蒜","生姜","干辣椒","鱼露","白糖","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%92%E8%96%84%E5%A3%B3"},{"name":"卤水拼盘","style":"潮汕","taste":["咸鲜"],"cost":60,"ingredients":["猪耳","猪蹄","鸭蛋","豆腐","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","南姜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E6%B0%B4%E6%8B%BC%E7%9B%98"},{"name":"潮汕鱼饭","style":"潮汕","taste":["清淡","咸鲜"],"cost":35,"ingredients":["鲜鱼","盐","生姜","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E6%B1%95%E9%B1%BC%E9%A5%AD"},{"name":"蚝烙","style":"潮汕","taste":["咸鲜"],"cost":30,"ingredients":["生蚝","鸡蛋","番薯粉","葱","盐","鱼露","猪油"],"url":"https://www.xiachufang.com/search/?keyword=%E8%9A%9D%E7%83%99"},{"name":"普宁豆腐","style":"潮汕","taste":["清淡","咸鲜"],"cost":15,"ingredients":["老豆腐","虾酱","大蒜","盐","猪油"],"url":"https://www.xiachufang.com/search/?keyword=%E6%99%AE%E5%AE%81%E8%B1%86%E8%85%90"},{"name":"潮汕牛肉丸","style":"潮汕","taste":["咸鲜"],"cost":35,"ingredients":["牛里脊","淀粉","盐","白胡椒","生抽","葱","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E6%B1%95%E7%89%9B%E8%82%89%E4%B8%B8"},{"name":"卤水鹅掌翅","style":"潮汕","taste":["咸鲜"],"cost":55,"ingredients":["鹅掌","鹅翅","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","南姜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E6%B0%B4%E9%B9%85%E6%8E%8C%E7%BF%85"},{"name":"炒螺片","style":"潮汕","taste":["咸鲜","香辣"],"cost":35,"ingredients":["海螺","青椒","大蒜","生姜","鱼露","白糖","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%92%E8%9E%BA%E7%89%87"},{"name":"炒血蛤","style":"潮汕","taste":["咸鲜"],"cost":30,"ingredients":["血蛤","大蒜","生姜","鱼露","白糖","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%92%E8%A1%80%E8%9B%A4"},{"name":"潮汕鱼丸汤","style":"潮汕","taste":["清淡","咸鲜"],"cost":30,"ingredients":["鲜鱼","淀粉","盐","白胡椒","葱","香菜","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E6%B1%95%E9%B1%BC%E4%B8%B8%E6%B1%A4"},{"name":"蒸石斑鱼","style":"潮汕","taste":["清淡","咸鲜"],"cost":80,"ingredients":["石斑鱼","生姜","葱","生抽","蚝油","香油","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%B8%E7%9F%B3%E6%96%91%E9%B1%BC"},{"name":"卤水豆腐","style":"潮汕","taste":["咸鲜"],"cost":12,"ingredients":["老豆腐","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E6%B0%B4%E8%B1%86%E8%85%90"},{"name":"潮汕卤肉饭","style":"潮汕","taste":["咸鲜"],"cost":25,"ingredients":["五花肉","大米","鸡蛋","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E6%B1%95%E5%8D%A4%E8%82%89%E9%A5%AD"},{"name":"咸菜猪肚汤","style":"潮汕","taste":["酸辣","咸鲜"],"cost":45,"ingredients":["猪肚","酸菜","生姜","葱","白胡椒","盐","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%92%B8%E8%8F%9C%E7%8C%AA%E8%82%9A%E6%B1%A4"},{"name":"蒜头朥粥","style":"潮汕","taste":["清淡","咸鲜"],"cost":15,"ingredients":["大米","大蒜","猪油","盐","葱","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E5%A4%B4%E6%9C%A5%E7%B2%A5"},{"name":"护国菜","style":"潮汕","taste":["清淡","咸鲜"],"cost":20,"ingredients":["番薯叶","猪里脊","生抽","盐","淀粉","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%8A%A4%E5%9B%BD%E8%8F%9C"},{"name":"反沙芋头","style":"潮汕","taste":["甜口"],"cost":20,"ingredients":["芋头","白糖","猪油"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8F%8D%E6%B2%99%E8%8A%8B%E5%A4%B4"},{"name":"糕烧番薯","style":"潮汕","taste":["甜口"],"cost":15,"ingredients":["番薯","白糖","猪油"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B3%95%E7%83%A7%E7%95%AA%E8%96%AF"},{"name":"卤水鸡翅","style":"潮汕","taste":["咸鲜"],"cost":30,"ingredients":["鸡翅","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","南姜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E6%B0%B4%E9%B8%A1%E7%BF%85"},{"name":"潮式冻蟹","style":"潮汕","taste":["清淡","咸鲜"],"cost":70,"ingredients":["花蟹","盐","生姜","葱","米醋"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E5%BC%8F%E5%86%BB%E8%9F%B9"},{"name":"蒸膏蟹","style":"潮汕","taste":["清淡","咸鲜"],"cost":100,"ingredients":["膏蟹","生姜","葱","生抽","米醋"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%B8%E8%86%8F%E8%9F%B9"},{"name":"无米粿","style":"潮汕","taste":["清淡","咸鲜"],"cost":15,"ingredients":["番薯粉","韭菜","虾仁","猪里脊","盐","鱼露","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A0%E7%B1%B3%E7%B2%BF"},{"name":"潮汕肠粉","style":"潮汕","taste":["清淡","咸鲜"],"cost":18,"ingredients":["粘米粉","淀粉","鸡蛋","猪里脊","鲜虾","生抽","蚝油","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BD%AE%E6%B1%95%E8%82%A0%E7%B2%89"},{"name":"达濠鱼丸","style":"潮汕","taste":["清淡","咸鲜"],"cost":25,"ingredients":["鲜鱼","淀粉","盐","白胡椒","葱","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%BE%BE%E6%BF%A0%E9%B1%BC%E4%B8%B8"},{"name":"豆酱焗蟹","style":"潮汕","taste":["咸鲜"],"cost":80,"ingredients":["花蟹","黄豆酱","大蒜","生姜","葱","料酒","白糖","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%86%E9%85%B1%E7%84%97%E8%9F%B9"},{"name":"薄壳米炒韭菜","style":"潮汕","taste":["咸鲜"],"cost":20,"ingredients":["薄壳","韭菜","鱼露","大蒜","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E8%96%84%E5%A3%B3%E7%B1%B3%E7%82%92%E9%9F%AD%E8%8F%9C"},{"name":"卤猪肠","style":"潮汕","taste":["咸鲜"],"cost":25,"ingredients":["猪大肠","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","南姜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%A4%E7%8C%AA%E8%82%A0"},{"name":"玉子烧","style":"日料","taste":["甜口","咸鲜"],"cost":10,"ingredients":["鸡蛋","白糖","生抽","料酒","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E7%8E%89%E5%AD%90%E7%83%A7"},{"name":"亲子丼","style":"日料","taste":["咸鲜","甜口"],"cost":25,"ingredients":["鸡腿","鸡蛋","洋葱","大米","生抽","料酒","白糖","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E4%BA%B2%E5%AD%90%E4%B8%BC"},{"name":"味噌汤","style":"日料","taste":["清淡","咸鲜"],"cost":10,"ingredients":["味噌","嫩豆腐","海带","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%91%B3%E5%99%8C%E6%B1%A4"},{"name":"三文鱼刺身","style":"日料","taste":["清淡","咸鲜"],"cost":80,"ingredients":["三文鱼","生抽","芥末","柠檬","白萝卜"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%89%E6%96%87%E9%B1%BC%E5%88%BA%E8%BA%AB"},{"name":"日式唐扬鸡","style":"日料","taste":["咸鲜"],"cost":28,"ingredients":["鸡腿","生抽","料酒","生姜","大蒜","淀粉","面包糠","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E5%94%90%E6%89%AC%E9%B8%A1"},{"name":"日式茶碗蒸","style":"日料","taste":["清淡","咸鲜"],"cost":20,"ingredients":["鸡蛋","鲜虾","香菇","生抽","料酒","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E8%8C%B6%E7%A2%97%E8%92%B8"},{"name":"照烧鸡腿","style":"日料","taste":["咸鲜","甜口"],"cost":28,"ingredients":["鸡腿","生抽","料酒","白糖","蜂蜜","大蒜","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%85%A7%E7%83%A7%E9%B8%A1%E8%85%BF"},{"name":"牛丼","style":"日料","taste":["咸鲜","甜口"],"cost":40,"ingredients":["牛里脊","洋葱","大米","生抽","料酒","白糖","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%89%9B%E4%B8%BC"},{"name":"天妇罗","style":"日料","taste":["清淡","咸鲜"],"cost":45,"ingredients":["鲜虾","茄子","南瓜","番薯","面粉","鸡蛋","生抽","白萝卜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A4%A9%E5%A6%87%E7%BD%97"},{"name":"日式拉面","style":"日料","taste":["咸鲜"],"cost":35,"ingredients":["面条","猪排骨","生抽","料酒","生姜","葱","鸡蛋","海带","木耳","五花肉"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E6%8B%89%E9%9D%A2"},{"name":"寿喜锅","style":"日料","taste":["甜口","咸鲜"],"cost":90,"ingredients":["牛里脊","豆腐","白菜","葱","香菇","魔芋丝","生抽","白糖","料酒","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E5%AF%BF%E5%96%9C%E9%94%85"},{"name":"手卷寿司","style":"日料","taste":["清淡","咸鲜"],"cost":40,"ingredients":["大米","海苔","三文鱼","鲜虾","黄瓜","米醋","白糖","盐","芥末"],"url":"https://www.xiachufang.com/search/?keyword=%E6%89%8B%E5%8D%B7%E5%AF%BF%E5%8F%B8"},{"name":"握寿司","style":"日料","taste":["清淡","咸鲜"],"cost":60,"ingredients":["大米","三文鱼","金枪鱼","鲜虾","米醋","白糖","盐","芥末","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E6%8F%A1%E5%AF%BF%E5%8F%B8"},{"name":"章鱼小丸子","style":"日料","taste":["咸鲜"],"cost":20,"ingredients":["章鱼","面粉","鸡蛋","葱","生姜","生抽","木鱼花","海苔","沙拉酱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%AB%A0%E9%B1%BC%E5%B0%8F%E4%B8%B8%E5%AD%90"},{"name":"日式煎饺","style":"日料","taste":["咸鲜"],"cost":25,"ingredients":["猪里脊","白菜","韭菜","饺子皮","生抽","料酒","生姜","大蒜","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%85%8E%E9%A5%BA"},{"name":"冷荞麦面","style":"日料","taste":["清淡","咸鲜"],"cost":20,"ingredients":["荞麦面","生抽","料酒","白萝卜","葱","海苔","芥末"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%B7%E8%8D%9E%E9%BA%A6%E9%9D%A2"},{"name":"日式炸猪排","style":"日料","taste":["咸鲜"],"cost":30,"ingredients":["猪里脊","面包糠","鸡蛋","面粉","生抽","料酒","盐","白糖","洋葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%82%B8%E7%8C%AA%E6%8E%92"},{"name":"味噌猪肉炒","style":"日料","taste":["咸鲜","甜口"],"cost":28,"ingredients":["猪里脊","味噌","生抽","料酒","白糖","生姜","大蒜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%91%B3%E5%99%8C%E7%8C%AA%E8%82%89%E7%82%92"},{"name":"日式土豆炖肉","style":"日料","taste":["咸鲜","甜口"],"cost":35,"ingredients":["猪里脊","土豆","胡萝卜","洋葱","生抽","料酒","白糖","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E5%9C%9F%E8%B1%86%E7%82%96%E8%82%89"},{"name":"关东煮","style":"日料","taste":["清淡","咸鲜"],"cost":35,"ingredients":["萝卜","鸡蛋","豆腐","魔芋","鱼豆腐","午餐肉","生抽","料酒","盐","海带"],"url":"https://www.xiachufang.com/search/?keyword=%E5%85%B3%E4%B8%9C%E7%85%AE"},{"name":"豆腐锅","style":"日料","taste":["清淡","咸鲜"],"cost":25,"ingredients":["嫩豆腐","香菇","白菜","葱","生抽","料酒","生姜","味噌"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%86%E8%85%90%E9%94%85"},{"name":"日式牛肉饭","style":"日料","taste":["咸鲜","甜口"],"cost":45,"ingredients":["牛里脊","大米","洋葱","生抽","料酒","白糖","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%89%9B%E8%82%89%E9%A5%AD"},{"name":"海鲜丼","style":"日料","taste":["清淡","咸鲜"],"cost":80,"ingredients":["三文鱼","金枪鱼","鲜虾","扇贝","大米","米醋","白糖","盐","芥末","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B5%B7%E9%B2%9C%E4%B8%BC"},{"name":"北海道奶油玉米汤","style":"日料","taste":["甜口","清淡"],"cost":20,"ingredients":["玉米","淡奶油","牛奶","洋葱","黄油","盐","白胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8C%97%E6%B5%B7%E9%81%93%E5%A5%B6%E6%B2%B9%E7%8E%89%E7%B1%B3%E6%B1%A4"},{"name":"日式南蛮鸡","style":"日料","taste":["酸甜","咸鲜"],"cost":28,"ingredients":["鸡腿","鸡蛋","洋葱","米醋","白糖","生抽","淀粉","面粉","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E5%8D%97%E8%9B%AE%E9%B8%A1"},{"name":"鲑鱼茶漬飯","style":"日料","taste":["清淡","咸鲜"],"cost":35,"ingredients":["大米","三文鱼","绿茶","盐","海苔","芥末","生抽","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%B2%91%E9%B1%BC%E8%8C%B6%E6%BC%AC%E9%A3%AF"},{"name":"日式炒乌冬","style":"日料","taste":["咸鲜"],"cost":25,"ingredients":["乌冬面","猪里脊","洋葱","胡萝卜","生抽","蚝油","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%82%92%E4%B9%8C%E5%86%AC"},{"name":"日式炸虾","style":"日料","taste":["清淡","咸鲜"],"cost":45,"ingredients":["鲜虾","面包糠","鸡蛋","面粉","生抽","盐","白糖","洋葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%82%B8%E8%99%BE"},{"name":"盐烤秋刀鱼","style":"日料","taste":["咸鲜"],"cost":25,"ingredients":["秋刀鱼","盐","柠檬","白萝卜","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E7%9B%90%E7%83%A4%E7%A7%8B%E5%88%80%E9%B1%BC"},{"name":"蒸蛤蜊","style":"日料","taste":["清淡","咸鲜"],"cost":30,"ingredients":["花甲","清酒","生姜","葱","盐","黄油"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%B8%E8%9B%A4%E8%9C%8A"},{"name":"鸡肉串烧","style":"日料","taste":["咸鲜","甜口"],"cost":30,"ingredients":["鸡腿","鸡皮","鸡心","生抽","料酒","白糖","味淋","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%B8%A1%E8%82%89%E4%B8%B2%E7%83%A7"},{"name":"五目炊饭","style":"日料","taste":["咸鲜"],"cost":30,"ingredients":["大米","香菇","胡萝卜","牛蒡","油豆腐","鸡腿","生抽","料酒","白糖","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E4%BA%94%E7%9B%AE%E7%82%8A%E9%A5%AD"},{"name":"日式咖喱饭","style":"日料","taste":["咸鲜","微辣"],"cost":30,"ingredients":["猪里脊","土豆","胡萝卜","洋葱","咖喱块","大米","生抽","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E5%92%96%E5%96%B1%E9%A5%AD"},{"name":"日式炸鸡块","style":"日料","taste":["咸鲜"],"cost":25,"ingredients":["鸡腿","生抽","料酒","生姜","大蒜","淀粉","鸡蛋","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%82%B8%E9%B8%A1%E5%9D%97"},{"name":"冷豆腐","style":"日料","taste":["清淡","咸鲜"],"cost":10,"ingredients":["嫩豆腐","生抽","葱","生姜","木鱼花","海苔"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%B7%E8%B1%86%E8%85%90"},{"name":"日式麻婆豆腐","style":"日料","taste":["微辣","咸鲜"],"cost":18,"ingredients":["嫩豆腐","猪里脊","豆瓣酱","味噌","生抽","白糖","大蒜","生姜","葱","淀粉","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E9%BA%BB%E5%A9%86%E8%B1%86%E8%85%90"},{"name":"味噌烤茄子","style":"日料","taste":["甜口","咸鲜"],"cost":15,"ingredients":["茄子","味噌","白糖","料酒","生抽","芝麻"],"url":"https://www.xiachufang.com/search/?keyword=%E5%91%B3%E5%99%8C%E7%83%A4%E8%8C%84%E5%AD%90"},{"name":"豚骨拉面","style":"日料","taste":["咸鲜"],"cost":40,"ingredients":["面条","猪排骨","五花肉","生抽","盐","葱","生姜","大蒜","鸡蛋","海带","木耳"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%9A%E9%AA%A8%E6%8B%89%E9%9D%A2"},{"name":"味噌拉面","style":"日料","taste":["咸鲜"],"cost":35,"ingredients":["面条","猪里脊","味噌","生抽","料酒","白糖","葱","生姜","大蒜","鸡蛋","玉米"],"url":"https://www.xiachufang.com/search/?keyword=%E5%91%B3%E5%99%8C%E6%8B%89%E9%9D%A2"},{"name":"日式冷面","style":"日料","taste":["酸甜","咸鲜"],"cost":20,"ingredients":["荞麦面","生抽","料酒","米醋","白糖","葱","海苔","白萝卜","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E5%86%B7%E9%9D%A2"},{"name":"日式烤饭团","style":"日料","taste":["咸鲜","甜口"],"cost":12,"ingredients":["大米","生抽","盐","海苔","芝麻","三文鱼","梅干"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%83%A4%E9%A5%AD%E5%9B%A2"},{"name":"牛舌定食","style":"日料","taste":["咸鲜"],"cost":80,"ingredients":["牛舌","盐","柠檬","生抽","大麦饭","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%89%9B%E8%88%8C%E5%AE%9A%E9%A3%9F"},{"name":"日式炒饭","style":"日料","taste":["咸鲜"],"cost":20,"ingredients":["大米","鸡蛋","葱","生抽","盐","猪里脊","胡萝卜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E7%82%92%E9%A5%AD"},{"name":"博多水炊き","style":"日料","taste":["清淡","咸鲜"],"cost":65,"ingredients":["整鸡","白菜","豆腐","葱","香菇","生姜","盐","米醋","柚子","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8D%9A%E5%A4%9A%E6%B0%B4%E7%82%8A%E3%81%8D"},{"name":"军舰寿司","style":"日料","taste":["清淡","咸鲜"],"cost":50,"ingredients":["大米","海苔","鲑鱼子","米醋","白糖","盐","芥末","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%9B%E8%88%B0%E5%AF%BF%E5%8F%B8"},{"name":"日式酱油拉面","style":"日料","taste":["咸鲜"],"cost":35,"ingredients":["面条","猪排骨","生抽","料酒","生姜","葱","大蒜","鸡蛋","海带","五花肉"],"url":"https://www.xiachufang.com/search/?keyword=%E6%97%A5%E5%BC%8F%E9%85%B1%E6%B2%B9%E6%8B%89%E9%9D%A2"},{"name":"海鲜味噌汤","style":"日料","taste":["清淡","咸鲜"],"cost":35,"ingredients":["味噌","蛤蜊","鲜虾","海带","豆腐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B5%B7%E9%B2%9C%E5%91%B3%E5%99%8C%E6%B1%A4"},{"name":"盐味拉面","style":"日料","taste":["清淡","咸鲜"],"cost":35,"ingredients":["面条","鸡骨","盐","葱","生姜","大蒜","鸡蛋","海带","鲜虾"],"url":"https://www.xiachufang.com/search/?keyword=%E7%9B%90%E5%91%B3%E6%8B%89%E9%9D%A2"},{"name":"拿坡里意面（日式）","style":"日料","taste":["酸甜","咸鲜"],"cost":25,"ingredients":["意大利面","番茄酱","洋葱","香肠","青椒","黄油","盐","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E6%8B%BF%E5%9D%A1%E9%87%8C%E6%84%8F%E9%9D%A2%EF%BC%88%E6%97%A5%E5%BC%8F%EF%BC%89"},{"name":"黑椒牛排","style":"西餐","taste":["咸鲜"],"cost":80,"ingredients":["牛里脊","黑胡椒","黄油","大蒜","生抽","盐","迷迭香","洋葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BB%91%E6%A4%92%E7%89%9B%E6%8E%92"},{"name":"奶油意面","style":"西餐","taste":["甜口","咸鲜"],"cost":25,"ingredients":["意大利面","淡奶油","黄油","芝士","大蒜","盐","黑胡椒","火腿"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A5%B6%E6%B2%B9%E6%84%8F%E9%9D%A2"},{"name":"煎三文鱼","style":"西餐","taste":["咸鲜"],"cost":65,"ingredients":["三文鱼","黄油","柠檬","大蒜","盐","黑胡椒","迷迭香"],"url":"https://www.xiachufang.com/search/?keyword=%E7%85%8E%E4%B8%89%E6%96%87%E9%B1%BC"},{"name":"番茄肉酱意面","style":"西餐","taste":["酸甜","咸鲜"],"cost":25,"ingredients":["意大利面","牛里脊","番茄","洋葱","大蒜","番茄酱","红酒","盐","黑胡椒","罗勒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%95%AA%E8%8C%84%E8%82%89%E9%85%B1%E6%84%8F%E9%9D%A2"},{"name":"烤蒜香虾","style":"西餐","taste":["咸鲜"],"cost":55,"ingredients":["鲜虾","大蒜","黄油","柠檬","盐","黑胡椒","欧芹"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E8%92%9C%E9%A6%99%E8%99%BE"},{"name":"恺撒沙拉","style":"西餐","taste":["酸甜","咸鲜"],"cost":25,"ingredients":["生菜","培根","芝士","面包糠","鸡蛋","柠檬","大蒜","黑胡椒","盐","沙拉酱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%81%BA%E6%92%92%E6%B2%99%E6%8B%89"},{"name":"蘑菇忌廉汤","style":"西餐","taste":["甜口","咸鲜"],"cost":20,"ingredients":["香菇","平菇","淡奶油","黄油","洋葱","大蒜","盐","黑胡椒","面粉"],"url":"https://www.xiachufang.com/search/?keyword=%E8%98%91%E8%8F%87%E5%BF%8C%E5%BB%89%E6%B1%A4"},{"name":"西班牙海鲜饭","style":"西餐","taste":["咸鲜"],"cost":75,"ingredients":["大米","鲜虾","花蟹","扇贝","鱿鱼","番茄","洋葱","大蒜","藏红花","盐","黑胡椒","欧芹"],"url":"https://www.xiachufang.com/search/?keyword=%E8%A5%BF%E7%8F%AD%E7%89%99%E6%B5%B7%E9%B2%9C%E9%A5%AD"},{"name":"烤羊排","style":"西餐","taste":["咸鲜"],"cost":90,"ingredients":["羊排","大蒜","迷迭香","黄油","盐","黑胡椒","柠檬"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E7%BE%8A%E6%8E%92"},{"name":"龙虾意面","style":"西餐","taste":["咸鲜","甜口"],"cost":150,"ingredients":["龙虾","意大利面","番茄","洋葱","大蒜","淡奶油","白葡萄酒","黄油","盐","黑胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BE%99%E8%99%BE%E6%84%8F%E9%9D%A2"},{"name":"尼斯沙拉","style":"西餐","taste":["酸甜","咸鲜"],"cost":35,"ingredients":["金枪鱼","鸡蛋","土豆","四季豆","番茄","黄瓜","橄榄","柠檬","盐","黑胡椒","沙拉酱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B0%BC%E6%96%AF%E6%B2%99%E6%8B%89"},{"name":"法式洋葱汤","style":"西餐","taste":["甜口","咸鲜"],"cost":25,"ingredients":["洋葱","黄油","面包","芝士","红酒","盐","黑胡椒","百里香"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%95%E5%BC%8F%E6%B4%8B%E8%91%B1%E6%B1%A4"},{"name":"惠灵顿牛排","style":"西餐","taste":["咸鲜"],"cost":130,"ingredients":["牛里脊","香菇","火腿","千层酥皮","黄油","大蒜","盐","黑胡椒","迷迭香","芥末"],"url":"https://www.xiachufang.com/search/?keyword=%E6%83%A0%E7%81%B5%E9%A1%BF%E7%89%9B%E6%8E%92"},{"name":"班尼迪克蛋","style":"西餐","taste":["酸甜","咸鲜"],"cost":25,"ingredients":["鸡蛋","培根","英式松饼","黄油","柠檬","盐","黑胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%8F%AD%E5%B0%BC%E8%BF%AA%E5%85%8B%E8%9B%8B"},{"name":"松露意面","style":"西餐","taste":["咸鲜"],"cost":80,"ingredients":["意大利面","黑松露","黄油","淡奶油","芝士","大蒜","盐","黑胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%9D%BE%E9%9C%B2%E6%84%8F%E9%9D%A2"},{"name":"牛肉汉堡","style":"西餐","taste":["咸鲜"],"cost":35,"ingredients":["牛里脊","汉堡包","生菜","番茄","芝士","洋葱","黄油","盐","黑胡椒","番茄酱","芥末"],"url":"https://www.xiachufang.com/search/?keyword=%E7%89%9B%E8%82%89%E6%B1%89%E5%A0%A1"},{"name":"炸鱼薯条","style":"西餐","taste":["咸鲜"],"cost":35,"ingredients":["鳕鱼","土豆","面粉","鸡蛋","面包糠","盐","黑胡椒","柠檬","番茄酱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%B8%E9%B1%BC%E8%96%AF%E6%9D%A1"},{"name":"希腊沙拉","style":"西餐","taste":["酸甜","清淡"],"cost":25,"ingredients":["番茄","黄瓜","洋葱","橄榄","芝士","柠檬","橄榄油","盐","黑胡椒","牛至"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B8%8C%E8%85%8A%E6%B2%99%E6%8B%89"},{"name":"意式烩饭","style":"西餐","taste":["咸鲜"],"cost":35,"ingredients":["大米","洋葱","大蒜","白葡萄酒","鸡汤","芝士","黄油","盐","黑胡椒","欧芹"],"url":"https://www.xiachufang.com/search/?keyword=%E6%84%8F%E5%BC%8F%E7%83%A9%E9%A5%AD"},{"name":"烤猪排","style":"西餐","taste":["咸鲜"],"cost":45,"ingredients":["猪里脊","大蒜","迷迭香","黄油","盐","黑胡椒","柠檬","芥末"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E7%8C%AA%E6%8E%92"},{"name":"蒜香黄油蛤蜊","style":"西餐","taste":["咸鲜"],"cost":35,"ingredients":["花甲","大蒜","黄油","白葡萄酒","欧芹","盐","黑胡椒","柠檬"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E9%A6%99%E9%BB%84%E6%B2%B9%E8%9B%A4%E8%9C%8A"},{"name":"培根芝士汉堡","style":"西餐","taste":["咸鲜"],"cost":38,"ingredients":["牛里脊","培根","芝士","汉堡包","生菜","番茄","洋葱","黄油","盐","黑胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%9F%B9%E6%A0%B9%E8%8A%9D%E5%A3%AB%E6%B1%89%E5%A0%A1"},{"name":"奶油南瓜汤","style":"西餐","taste":["甜口","清淡"],"cost":20,"ingredients":["南瓜","淡奶油","黄油","洋葱","大蒜","盐","黑胡椒","肉豆蔻"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A5%B6%E6%B2%B9%E5%8D%97%E7%93%9C%E6%B1%A4"},{"name":"烤牛小排","style":"西餐","taste":["咸鲜"],"cost":90,"ingredients":["牛排骨","大蒜","迷迭香","黄油","盐","黑胡椒","红酒","洋葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E7%89%9B%E5%B0%8F%E6%8E%92"},{"name":"蒜香烤大虾","style":"西餐","taste":["咸鲜"],"cost":60,"ingredients":["鲜虾","大蒜","黄油","柠檬","欧芹","盐","黑胡椒","白葡萄酒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E9%A6%99%E7%83%A4%E5%A4%A7%E8%99%BE"},{"name":"法式蓝带猪排","style":"西餐","taste":["咸鲜"],"cost":35,"ingredients":["猪里脊","火腿","芝士","面包糠","鸡蛋","面粉","黄油","盐","黑胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%95%E5%BC%8F%E8%93%9D%E5%B8%A6%E7%8C%AA%E6%8E%92"},{"name":"鲜虾芦笋意面","style":"西餐","taste":["清淡","咸鲜"],"cost":45,"ingredients":["意大利面","鲜虾","芦笋","大蒜","黄油","白葡萄酒","盐","黑胡椒","柠檬"],"url":"https://www.xiachufang.com/search/?keyword=%E9%B2%9C%E8%99%BE%E8%8A%A6%E7%AC%8B%E6%84%8F%E9%9D%A2"},{"name":"牛肉塔塔","style":"西餐","taste":["咸鲜"],"cost":80,"ingredients":["牛里脊","洋葱","刺山柑","芥末","生抽","柠檬","盐","黑胡椒","欧芹","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E7%89%9B%E8%82%89%E5%A1%94%E5%A1%94"},{"name":"白葡萄酒煮贻贝","style":"西餐","taste":["咸鲜"],"cost":50,"ingredients":["青口贝","白葡萄酒","大蒜","黄油","欧芹","盐","黑胡椒","柠檬"],"url":"https://www.xiachufang.com/search/?keyword=%E7%99%BD%E8%91%A1%E8%90%84%E9%85%92%E7%85%AE%E8%B4%BB%E8%B4%9D"},{"name":"烤整只鸡","style":"西餐","taste":["咸鲜"],"cost":50,"ingredients":["整鸡","大蒜","迷迭香","黄油","盐","黑胡椒","柠檬","百里香"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E6%95%B4%E5%8F%AA%E9%B8%A1"},{"name":"黑松露炒蛋","style":"西餐","taste":["咸鲜"],"cost":85,"ingredients":["鸡蛋","黑松露","黄油","淡奶油","盐","黑胡椒","欧芹"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BB%91%E6%9D%BE%E9%9C%B2%E7%82%92%E8%9B%8B"},{"name":"芝士火锅","style":"西餐","taste":["甜口","咸鲜"],"cost":60,"ingredients":["芝士","白葡萄酒","大蒜","面包","土豆","香肠","黑胡椒","肉豆蔻"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8A%9D%E5%A3%AB%E7%81%AB%E9%94%85"},{"name":"法式火焰薄饼","style":"西餐","taste":["酸甜","咸鲜"],"cost":30,"ingredients":["面粉","洋葱","培根","淡奶油","芝士","盐","黑胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%95%E5%BC%8F%E7%81%AB%E7%84%B0%E8%96%84%E9%A5%BC"},{"name":"意式提拉米苏","style":"西餐","taste":["甜口"],"cost":30,"ingredients":["马斯卡彭芝士","咖啡","手指饼干","可可粉","鸡蛋","白糖","朗姆酒","淡奶油"],"url":"https://www.xiachufang.com/search/?keyword=%E6%84%8F%E5%BC%8F%E6%8F%90%E6%8B%89%E7%B1%B3%E8%8B%8F"},{"name":"焦糖布丁","style":"西餐","taste":["甜口"],"cost":18,"ingredients":["鸡蛋","牛奶","淡奶油","白糖","香草精"],"url":"https://www.xiachufang.com/search/?keyword=%E7%84%A6%E7%B3%96%E5%B8%83%E4%B8%81"},{"name":"法式鸭胸配橙汁","style":"西餐","taste":["酸甜","咸鲜"],"cost":85,"ingredients":["鸭胸","橙子","蜂蜜","红酒","黄油","盐","黑胡椒","百里香"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%95%E5%BC%8F%E9%B8%AD%E8%83%B8%E9%85%8D%E6%A9%99%E6%B1%81"},{"name":"烤三文鱼配蔬菜","style":"西餐","taste":["清淡","咸鲜"],"cost":65,"ingredients":["三文鱼","芦笋","小番茄","黄油","柠檬","大蒜","盐","黑胡椒","迷迭香"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E4%B8%89%E6%96%87%E9%B1%BC%E9%85%8D%E8%94%AC%E8%8F%9C"},{"name":"和牛铁板烧","style":"西餐","taste":["咸鲜"],"cost":150,"ingredients":["和牛","大蒜","黄油","盐","黑胡椒","迷迭香","洋葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%92%8C%E7%89%9B%E9%93%81%E6%9D%BF%E7%83%A7"},{"name":"烤羔羊腿","style":"西餐","taste":["咸鲜"],"cost":120,"ingredients":["羊腿","大蒜","迷迭香","黄油","盐","黑胡椒","柠檬","红酒","洋葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E7%BE%94%E7%BE%8A%E8%85%BF"},{"name":"波士顿龙虾","style":"西餐","taste":["清淡","咸鲜"],"cost":200,"ingredients":["龙虾","黄油","大蒜","柠檬","盐","黑胡椒","欧芹"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%A2%E5%A3%AB%E9%A1%BF%E9%BE%99%E8%99%BE"},{"name":"帝王蟹","style":"西餐","taste":["清淡","咸鲜"],"cost":250,"ingredients":["帝王蟹","黄油","大蒜","柠檬","盐","黑胡椒","欧芹"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B8%9D%E7%8E%8B%E8%9F%B9"},{"name":"意式水煮鱼","style":"西餐","taste":["咸鲜"],"cost":55,"ingredients":["鲈鱼","番茄","洋葱","大蒜","白葡萄酒","橄榄油","盐","黑胡椒","欧芹","罗勒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%84%8F%E5%BC%8F%E6%B0%B4%E7%85%AE%E9%B1%BC"},{"name":"西班牙炸虾","style":"西餐","taste":["香辣","咸鲜"],"cost":55,"ingredients":["鲜虾","大蒜","干辣椒","橄榄油","盐","黑胡椒","柠檬","欧芹"],"url":"https://www.xiachufang.com/search/?keyword=%E8%A5%BF%E7%8F%AD%E7%89%99%E7%82%B8%E8%99%BE"},{"name":"烤鸡翅","style":"西餐","taste":["咸鲜","甜口"],"cost":25,"ingredients":["鸡翅","大蒜","黄油","蜂蜜","生抽","盐","黑胡椒","迷迭香"],"url":"https://www.xiachufang.com/search/?keyword=%E7%83%A4%E9%B8%A1%E7%BF%85"},{"name":"意大利杂菜汤","style":"西餐","taste":["清淡","咸鲜"],"cost":25,"ingredients":["番茄","洋葱","胡萝卜","芹菜","大蒜","土豆","白菜","橄榄油","盐","黑胡椒","罗勒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%84%8F%E5%A4%A7%E5%88%A9%E6%9D%82%E8%8F%9C%E6%B1%A4"},{"name":"锅包肉（东北版）","style":"东北","taste":["酸甜"],"cost":30,"ingredients":["猪里脊","淀粉","米醋","白糖","番茄","葱","生姜","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E9%94%85%E5%8C%85%E8%82%89%EF%BC%88%E4%B8%9C%E5%8C%97%E7%89%88%EF%BC%89"},{"name":"小鸡炖蘑菇","style":"东北","taste":["咸鲜"],"cost":40,"ingredients":["整鸡","榛蘑","粉条","生姜","葱","大蒜","生抽","老抽","料酒","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B0%8F%E9%B8%A1%E7%82%96%E8%98%91%E8%8F%87"},{"name":"猪肉炖粉条（东北版）","style":"东北","taste":["咸鲜"],"cost":30,"ingredients":["五花肉","粉条","生抽","老抽","料酒","生姜","葱","大蒜","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E7%8C%AA%E8%82%89%E7%82%96%E7%B2%89%E6%9D%A1%EF%BC%88%E4%B8%9C%E5%8C%97%E7%89%88%EF%BC%89"},{"name":"酸菜汆白肉","style":"东北","taste":["酸辣","咸鲜"],"cost":35,"ingredients":["五花肉","酸菜","干辣椒","葱","生姜","八角","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%8F%9C%E6%B1%86%E7%99%BD%E8%82%89"},{"name":"溜肉段","style":"东北","taste":["咸鲜","酸甜"],"cost":30,"ingredients":["猪里脊","淀粉","生抽","米醋","白糖","葱","生姜","大蒜","青椒","胡萝卜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%BA%9C%E8%82%89%E6%AE%B5"},{"name":"东北大拉皮","style":"东北","taste":["酸辣","咸鲜"],"cost":18,"ingredients":["粉条","黄瓜","胡萝卜","鸡蛋","大蒜","米醋","生抽","白糖","香油","干辣椒","芝麻"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%9C%E5%8C%97%E5%A4%A7%E6%8B%89%E7%9A%AE"},{"name":"杀猪菜","style":"东北","taste":["咸鲜"],"cost":45,"ingredients":["五花肉","猪血肠","酸菜","粉条","葱","生姜","大蒜","盐","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E6%9D%80%E7%8C%AA%E8%8F%9C"},{"name":"酱骨头","style":"东北","taste":["咸鲜","甜口"],"cost":50,"ingredients":["猪脊骨","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B1%E9%AA%A8%E5%A4%B4"},{"name":"得莫利炖鱼","style":"东北","taste":["咸鲜"],"cost":40,"ingredients":["草鱼","豆腐","粉条","生姜","葱","大蒜","生抽","老抽","料酒","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%BE%97%E8%8E%AB%E5%88%A9%E7%82%96%E9%B1%BC"},{"name":"尖椒干豆腐","style":"东北","taste":["香辣","咸鲜"],"cost":12,"ingredients":["干豆腐","尖椒","大蒜","生抽","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B0%96%E6%A4%92%E5%B9%B2%E8%B1%86%E8%85%90"},{"name":"软炸里脊","style":"东北","taste":["咸鲜"],"cost":28,"ingredients":["猪里脊","鸡蛋","面粉","淀粉","盐","料酒","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%BD%AF%E7%82%B8%E9%87%8C%E8%84%8A"},{"name":"熘肝尖","style":"东北","taste":["咸鲜","微辣"],"cost":20,"ingredients":["猪肝","木耳","黄花菜","青椒","生抽","米醋","白糖","淀粉","料酒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%86%98%E8%82%9D%E5%B0%96"},{"name":"熘腰花","style":"东北","taste":["咸鲜","微辣"],"cost":25,"ingredients":["猪腰","木耳","黄花菜","青椒","生抽","米醋","白糖","淀粉","料酒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%86%98%E8%85%B0%E8%8A%B1"},{"name":"酱扒茄子","style":"东北","taste":["咸鲜"],"cost":12,"ingredients":["茄子","东北大酱","大蒜","葱","生抽","白糖","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B1%E6%89%92%E8%8C%84%E5%AD%90"},{"name":"雪里蕻炖豆腐","style":"东北","taste":["咸鲜"],"cost":15,"ingredients":["老豆腐","雪里蕻","生姜","葱","盐","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E9%9B%AA%E9%87%8C%E8%95%BB%E7%82%96%E8%B1%86%E8%85%90"},{"name":"排骨炖豆角","style":"东北","taste":["咸鲜"],"cost":40,"ingredients":["猪排骨","豆角","生抽","老抽","料酒","生姜","葱","大蒜","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E6%8E%92%E9%AA%A8%E7%82%96%E8%B1%86%E8%A7%92"},{"name":"大丰收炖","style":"东北","taste":["清淡","咸鲜"],"cost":35,"ingredients":["猪排骨","豆角","南瓜","玉米","土豆","生姜","葱","盐","生抽"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A4%A7%E4%B8%B0%E6%94%B6%E7%82%96"},{"name":"铁锅炖大鹅","style":"东北","taste":["咸鲜","微辣"],"cost":65,"ingredients":["鹅肉","土豆","干辣椒","生抽","老抽","料酒","生姜","葱","大蒜","八角","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E9%93%81%E9%94%85%E7%82%96%E5%A4%A7%E9%B9%85"},{"name":"东北乱炖","style":"东北","taste":["咸鲜"],"cost":40,"ingredients":["猪里脊","土豆","茄子","豆角","番茄","生抽","盐","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%9C%E5%8C%97%E4%B9%B1%E7%82%96"},{"name":"白肉血肠","style":"东北","taste":["咸鲜"],"cost":35,"ingredients":["五花肉","猪血","猪肠","盐","葱","生姜","大蒜","蒜酱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%99%BD%E8%82%89%E8%A1%80%E8%82%A0"},{"name":"酸菜猪骨汤","style":"东北","taste":["酸辣","咸鲜"],"cost":35,"ingredients":["猪脊骨","酸菜","生姜","葱","盐","白胡椒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%8F%9C%E7%8C%AA%E9%AA%A8%E6%B1%A4"},{"name":"东北酸菜火锅","style":"东北","taste":["酸辣","咸鲜"],"cost":55,"ingredients":["酸菜","五花肉","粉条","血肠","豆腐","生姜","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%9C%E5%8C%97%E9%85%B8%E8%8F%9C%E7%81%AB%E9%94%85"},{"name":"人参鸡汤","style":"东北","taste":["清淡","甜口"],"cost":80,"ingredients":["整鸡","人参","红枣","香菇","生姜","葱","盐","料酒","枸杞"],"url":"https://www.xiachufang.com/search/?keyword=%E4%BA%BA%E5%8F%82%E9%B8%A1%E6%B1%A4"},{"name":"炒肉拉皮","style":"东北","taste":["咸鲜","香辣"],"cost":25,"ingredients":["猪里脊","粉条","黄瓜","胡萝卜","木耳","生抽","米醋","白糖","香油","大蒜","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%92%E8%82%89%E6%8B%89%E7%9A%AE"},{"name":"虎皮鸡蛋","style":"东北","taste":["咸鲜","甜口"],"cost":15,"ingredients":["鸡蛋","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E8%99%8E%E7%9A%AE%E9%B8%A1%E8%9B%8B"},{"name":"尖椒土豆片","style":"东北","taste":["咸鲜","微辣"],"cost":10,"ingredients":["土豆","尖椒","大蒜","盐","生抽","孜然"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B0%96%E6%A4%92%E5%9C%9F%E8%B1%86%E7%89%87"},{"name":"香辣蕨菜","style":"东北","taste":["香辣","咸鲜"],"cost":15,"ingredients":["蕨菜","干辣椒","大蒜","生抽","香油","盐","米醋"],"url":"https://www.xiachufang.com/search/?keyword=%E9%A6%99%E8%BE%A3%E8%95%A8%E8%8F%9C"},{"name":"朝鲜冷面","style":"东北","taste":["酸甜","清淡"],"cost":20,"ingredients":["荞麦面","牛骨汤","苹果","梨","黄瓜","鸡蛋","泡菜","米醋","白糖","盐","芝麻"],"url":"https://www.xiachufang.com/search/?keyword=%E6%9C%9D%E9%B2%9C%E5%86%B7%E9%9D%A2"},{"name":"红烧鹿肉","style":"东北","taste":["咸鲜","甜口"],"cost":90,"ingredients":["鹿肉","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E7%83%A7%E9%B9%BF%E8%82%89"},{"name":"苞米炖排骨","style":"东北","taste":["清淡","甜口"],"cost":40,"ingredients":["猪排骨","玉米","生姜","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8B%9E%E7%B1%B3%E7%82%96%E6%8E%92%E9%AA%A8"},{"name":"沟帮子熏鸡","style":"东北","taste":["咸鲜"],"cost":55,"ingredients":["整鸡","生抽","老抽","白糖","料酒","生姜","葱","大蒜","花椒","八角","桂皮"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B2%9F%E5%B8%AE%E5%AD%90%E7%86%8F%E9%B8%A1"},{"name":"大庆扒鸡","style":"东北","taste":["咸鲜"],"cost":50,"ingredients":["整鸡","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角","桂皮","花椒","蜂蜜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A4%A7%E5%BA%86%E6%89%92%E9%B8%A1"},{"name":"猪血肠","style":"东北","taste":["咸鲜"],"cost":20,"ingredients":["猪血","猪肠","盐","葱","生姜","花椒","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%8C%AA%E8%A1%80%E8%82%A0"},{"name":"水晶肘子","style":"东北","taste":["咸鲜","酸甜"],"cost":50,"ingredients":["猪蹄","猪皮","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B0%B4%E6%99%B6%E8%82%98%E5%AD%90"},{"name":"东北拌菜","style":"东北","taste":["酸辣","清淡"],"cost":15,"ingredients":["白菜","胡萝卜","黄瓜","大蒜","米醋","白糖","盐","干辣椒","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%9C%E5%8C%97%E6%8B%8C%E8%8F%9C"},{"name":"葱爆羊肉","style":"东北","taste":["咸鲜"],"cost":45,"ingredients":["羊肉","葱","生抽","料酒","淀粉","盐","大蒜","生姜","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E8%91%B1%E7%88%86%E7%BE%8A%E8%82%89"},{"name":"蒙式烤羊腿","style":"东北","taste":["咸鲜"],"cost":90,"ingredients":["羊腿","大蒜","生姜","盐","孜然","干辣椒","生抽","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%99%E5%BC%8F%E7%83%A4%E7%BE%8A%E8%85%BF"},{"name":"糊拉汤","style":"东北","taste":["清淡","咸鲜"],"cost":10,"ingredients":["面粉","鸡蛋","葱","生姜","盐","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E7%B3%8A%E6%8B%89%E6%B1%A4"},{"name":"东北拌饭","style":"东北","taste":["酸辣","咸鲜"],"cost":20,"ingredients":["大米","鸡蛋","黄瓜","胡萝卜","泡菜","生抽","香油","芝麻","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%9C%E5%8C%97%E6%8B%8C%E9%A5%AD"},{"name":"剁椒鱼头（湘菜）","style":"湘菜","taste":["香辣","咸鲜"],"cost":45,"ingredients":["鱼头（花鲢）","剁椒","大蒜","生姜","葱","生抽","料酒","蚝油"],"url":"https://www.xiachufang.com/search/?keyword=%E5%89%81%E6%A4%92%E9%B1%BC%E5%A4%B4%EF%BC%88%E6%B9%98%E8%8F%9C%EF%BC%89"},{"name":"辣椒炒肉","style":"湘菜","taste":["中辣","香辣"],"cost":25,"ingredients":["五花肉","尖椒","豆豉","大蒜","生抽","盐","葱","料酒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%BE%A3%E6%A4%92%E7%82%92%E8%82%89"},{"name":"腊味合蒸","style":"湘菜","taste":["咸鲜"],"cost":50,"ingredients":["腊肉","腊鱼","腊鸡","白糖","生抽","猪油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%85%8A%E5%91%B3%E5%90%88%E8%92%B8"},{"name":"毛氏红烧肉","style":"湘菜","taste":["咸鲜","甜口","微辣"],"cost":40,"ingredients":["五花肉","生抽","老抽","白糖","料酒","干辣椒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%AF%9B%E6%B0%8F%E7%BA%A2%E7%83%A7%E8%82%89"},{"name":"东安子鸡","style":"湘菜","taste":["酸辣","香辣"],"cost":30,"ingredients":["整鸡","干辣椒","花椒","生姜","大蒜","米醋","盐","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E4%B8%9C%E5%AE%89%E5%AD%90%E9%B8%A1"},{"name":"永州血鸭","style":"湘菜","taste":["香辣","咸鲜"],"cost":40,"ingredients":["鸭腿","鸭血","干辣椒","大蒜","生姜","生抽","料酒","葱","豆豉"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B0%B8%E5%B7%9E%E8%A1%80%E9%B8%AD"},{"name":"湘西外婆菜","style":"湘菜","taste":["酸辣","咸鲜"],"cost":15,"ingredients":["大头菜","白萝卜","豇豆","干辣椒","大蒜","生抽","香油","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B9%98%E8%A5%BF%E5%A4%96%E5%A9%86%E8%8F%9C"},{"name":"酸辣鸡杂","style":"湘菜","taste":["酸辣"],"cost":25,"ingredients":["鸡心","鸡肝","鸡肠","泡椒","米醋","大蒜","生姜","生抽","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%BE%A3%E9%B8%A1%E6%9D%82"},{"name":"麻辣子鸡","style":"湘菜","taste":["重辣","麻辣"],"cost":35,"ingredients":["整鸡","干辣椒","花椒","大蒜","生姜","生抽","料酒","白糖","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BA%BB%E8%BE%A3%E5%AD%90%E9%B8%A1"},{"name":"冬笋炒腊肉","style":"湘菜","taste":["咸鲜","微辣"],"cost":40,"ingredients":["腊肉","冬笋","大蒜","生姜","干辣椒","生抽","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%AC%E7%AC%8B%E7%82%92%E8%85%8A%E8%82%89"},{"name":"火焙鱼","style":"湘菜","taste":["咸鲜","香辣"],"cost":25,"ingredients":["小鱼","干辣椒","大蒜","生姜","生抽","料酒","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%81%AB%E7%84%99%E9%B1%BC"},{"name":"发丝牛百叶","style":"湘菜","taste":["酸辣"],"cost":35,"ingredients":["牛百叶","干辣椒","米醋","大蒜","生姜","生抽","香油","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E5%8F%91%E4%B8%9D%E7%89%9B%E7%99%BE%E5%8F%B6"},{"name":"香煎活鳜鱼","style":"湘菜","taste":["咸鲜","微辣"],"cost":55,"ingredients":["鳜鱼","干辣椒","大蒜","生姜","生抽","料酒","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%A6%99%E7%85%8E%E6%B4%BB%E9%B3%9C%E9%B1%BC"},{"name":"红扣羊肉","style":"湘菜","taste":["咸鲜","微辣"],"cost":60,"ingredients":["羊肉","生抽","老抽","白糖","料酒","干辣椒","生姜","葱","大蒜","八角","桂皮"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E6%89%A3%E7%BE%8A%E8%82%89"},{"name":"小炒黄牛肉","style":"湘菜","taste":["香辣","咸鲜"],"cost":45,"ingredients":["牛里脊","尖椒","大蒜","生姜","生抽","蚝油","淀粉","料酒","葱","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E5%B0%8F%E7%82%92%E9%BB%84%E7%89%9B%E8%82%89"},{"name":"青椒炒猪血","style":"湘菜","taste":["香辣","咸鲜"],"cost":15,"ingredients":["鸭血","青椒","大蒜","生姜","生抽","盐","葱","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%9D%92%E6%A4%92%E7%82%92%E7%8C%AA%E8%A1%80"},{"name":"酸辣猪蹄","style":"湘菜","taste":["酸辣"],"cost":40,"ingredients":["猪蹄","泡椒","米醋","大蒜","生姜","生抽","料酒","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E9%85%B8%E8%BE%A3%E7%8C%AA%E8%B9%84"},{"name":"腊肠炒饭","style":"湘菜","taste":["咸鲜"],"cost":20,"ingredients":["大米","腊肠","鸡蛋","葱","生抽","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%85%8A%E8%82%A0%E7%82%92%E9%A5%AD"},{"name":"湘式红烧肉","style":"湘菜","taste":["咸鲜","甜口","微辣"],"cost":40,"ingredients":["五花肉","干辣椒","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B9%98%E5%BC%8F%E7%BA%A2%E7%83%A7%E8%82%89"},{"name":"邵阳猪血丸子","style":"湘菜","taste":["咸鲜","香辣"],"cost":25,"ingredients":["猪血","豆腐","五花肉","干辣椒","盐","葱","生姜","香油","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E9%82%B5%E9%98%B3%E7%8C%AA%E8%A1%80%E4%B8%B8%E5%AD%90"},{"name":"血酱鸭","style":"湘菜","taste":["香辣","咸鲜"],"cost":40,"ingredients":["鸭腿","鸭血","干辣椒","大蒜","生姜","生抽","料酒","葱","豆豉","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E8%A1%80%E9%85%B1%E9%B8%AD"},{"name":"湘西腊肉","style":"湘菜","taste":["咸鲜"],"cost":45,"ingredients":["五花肉","盐","干辣椒","花椒","生姜","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B9%98%E8%A5%BF%E8%85%8A%E8%82%89"},{"name":"香辣蟹","style":"湘菜","taste":["重辣","香辣"],"cost":85,"ingredients":["花蟹","干辣椒","豆瓣酱","大蒜","生姜","葱","生抽","料酒","白糖","淀粉"],"url":"https://www.xiachufang.com/search/?keyword=%E9%A6%99%E8%BE%A3%E8%9F%B9"},{"name":"剁椒蒸蛋","style":"湘菜","taste":["香辣","咸鲜"],"cost":10,"ingredients":["鸡蛋","剁椒","葱","生抽","香油","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E5%89%81%E6%A4%92%E8%92%B8%E8%9B%8B"},{"name":"擂茄子","style":"湘菜","taste":["香辣","咸鲜"],"cost":12,"ingredients":["茄子","大蒜","干辣椒","生抽","米醋","香油","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E6%93%82%E8%8C%84%E5%AD%90"},{"name":"农家小炒肉","style":"湘菜","taste":["香辣","咸鲜"],"cost":25,"ingredients":["五花肉","尖椒","大蒜","生抽","盐","葱","豆豉"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%9C%E5%AE%B6%E5%B0%8F%E7%82%92%E8%82%89"},{"name":"荷叶粉蒸肉","style":"湘菜","taste":["咸鲜","香辣"],"cost":35,"ingredients":["五花肉","大米","荷叶","豆瓣酱","生抽","料酒","生姜","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8D%B7%E5%8F%B6%E7%B2%89%E8%92%B8%E8%82%89"},{"name":"湘西土匪鸭","style":"湘菜","taste":["重辣","香辣"],"cost":40,"ingredients":["鸭腿","干辣椒","花椒","豆瓣酱","大蒜","生姜","生抽","料酒","白糖","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B9%98%E8%A5%BF%E5%9C%9F%E5%8C%AA%E9%B8%AD"},{"name":"炒猪大肠","style":"湘菜","taste":["香辣","咸鲜"],"cost":25,"ingredients":["猪大肠","青椒","干辣椒","大蒜","生姜","生抽","米醋","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%92%E7%8C%AA%E5%A4%A7%E8%82%A0"},{"name":"芷江鸭","style":"湘菜","taste":["香辣","咸鲜"],"cost":40,"ingredients":["鸭腿","干辣椒","豆瓣酱","大蒜","生姜","生抽","料酒","白糖","葱","花椒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8A%B7%E6%B1%9F%E9%B8%AD"},{"name":"腊味炒藜蒿","style":"湘菜","taste":["咸鲜","微辣"],"cost":30,"ingredients":["腊肉","藜蒿","大蒜","干辣椒","盐","生抽","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%85%8A%E5%91%B3%E7%82%92%E8%97%9C%E8%92%BF"},{"name":"浏阳蒸菜","style":"湘菜","taste":["咸鲜","微辣"],"cost":20,"ingredients":["五花肉","豆腐","干辣椒","大蒜","生抽","盐","淀粉","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B5%8F%E9%98%B3%E8%92%B8%E8%8F%9C"},{"name":"豆豉蒸排骨","style":"湘菜","taste":["咸鲜","微辣"],"cost":35,"ingredients":["猪排骨","豆豉","干辣椒","大蒜","生抽","料酒","淀粉","白糖","生姜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B1%86%E8%B1%89%E8%92%B8%E6%8E%92%E9%AA%A8"},{"name":"葱烧牛蹄筋","style":"湘菜","taste":["咸鲜"],"cost":50,"ingredients":["牛蹄筋","葱","生抽","老抽","白糖","料酒","生姜","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E8%91%B1%E7%83%A7%E7%89%9B%E8%B9%84%E7%AD%8B"},{"name":"泡椒猪肚","style":"湘菜","taste":["酸辣"],"cost":35,"ingredients":["猪肚","泡椒","大蒜","生姜","米醋","盐","生抽","料酒","葱","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%A1%E6%A4%92%E7%8C%AA%E8%82%9A"},{"name":"湖南米粉","style":"湘菜","taste":["香辣","咸鲜"],"cost":18,"ingredients":["米粉","猪里脊","干辣椒","大蒜","生抽","盐","葱","香菜","辣椒油","芝麻"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B9%96%E5%8D%97%E7%B1%B3%E7%B2%89"},{"name":"炒年糕","style":"湘菜","taste":["咸鲜","微辣"],"cost":20,"ingredients":["年糕","五花肉","白菜","干辣椒","大蒜","生抽","蚝油","白糖","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%92%E5%B9%B4%E7%B3%95"},{"name":"组庵豆腐","style":"湘菜","taste":["清淡","咸鲜"],"cost":20,"ingredients":["嫩豆腐","火腿","干贝","淀粉","生抽","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BB%84%E5%BA%B5%E8%B1%86%E8%85%90"},{"name":"钵子豆腐","style":"湘菜","taste":["香辣","咸鲜"],"cost":15,"ingredients":["老豆腐","干辣椒","大蒜","生抽","豆豉","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%92%B5%E5%AD%90%E8%B1%86%E8%85%90"},{"name":"钵子菜","style":"湘菜","taste":["咸鲜","微辣"],"cost":30,"ingredients":["猪里脊","豆腐","白菜","木耳","干辣椒","大蒜","生抽","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%92%B5%E5%AD%90%E8%8F%9C"},{"name":"湘味炒鸡块","style":"湘菜","taste":["香辣","咸鲜"],"cost":30,"ingredients":["整鸡","干辣椒","豆瓣酱","大蒜","生姜","生抽","料酒","白糖","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B9%98%E5%91%B3%E7%82%92%E9%B8%A1%E5%9D%97"},{"name":"虎皮辣椒","style":"湘菜","taste":["香辣","咸鲜"],"cost":10,"ingredients":["尖椒","大蒜","豆豉","生抽","米醋","白糖","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%99%8E%E7%9A%AE%E8%BE%A3%E6%A4%92"},{"name":"外婆红烧肉","style":"湘菜","taste":["咸鲜","甜口"],"cost":40,"ingredients":["五花肉","梅干菜","生抽","老抽","白糖","料酒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%A4%96%E5%A9%86%E7%BA%A2%E7%83%A7%E8%82%89"},{"name":"湘西酸鱼","style":"湘菜","taste":["酸辣","咸鲜"],"cost":40,"ingredients":["草鱼","酸菜","干辣椒","大蒜","生姜","生抽","料酒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B9%98%E8%A5%BF%E9%85%B8%E9%B1%BC"},{"name":"冬阴功汤","style":"泰国","taste":["酸辣"],"cost":40,"ingredients":["鲜虾","香茅","柠檬叶","南姜","干辣椒","鱼露","青柠","番茄","香菇","葱","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%AC%E9%98%B4%E5%8A%9F%E6%B1%A4"},{"name":"泰式炒河粉","style":"泰国","taste":["酸甜","咸鲜"],"cost":25,"ingredients":["河粉","鲜虾","鸡蛋","豆芽","葱","鱼露","米醋","白糖","花生","干辣椒","柠檬"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%82%92%E6%B2%B3%E7%B2%89"},{"name":"青木瓜沙拉","style":"泰国","taste":["酸辣"],"cost":20,"ingredients":["青木瓜","干辣椒","大蒜","青柠","鱼露","白糖","花生","番茄","豇豆","虾干"],"url":"https://www.xiachufang.com/search/?keyword=%E9%9D%92%E6%9C%A8%E7%93%9C%E6%B2%99%E6%8B%89"},{"name":"绿咖喱鸡","style":"泰国","taste":["香辣","甜口"],"cost":35,"ingredients":["鸡腿","椰浆","绿咖喱酱","香茅","柠檬叶","南姜","鱼露","白糖","九层塔","青椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BB%BF%E5%92%96%E5%96%B1%E9%B8%A1"},{"name":"红咖喱虾","style":"泰国","taste":["香辣","甜口"],"cost":45,"ingredients":["鲜虾","椰浆","红咖喱酱","香茅","柠檬叶","鱼露","白糖","九层塔","尖椒"],"url":"https://www.xiachufang.com/search/?keyword=%E7%BA%A2%E5%92%96%E5%96%B1%E8%99%BE"},{"name":"黄咖喱土豆鸡","style":"泰国","taste":["微辣","甜口"],"cost":30,"ingredients":["鸡腿","土豆","椰浆","黄咖喱块","洋葱","香茅","鱼露","白糖","柠檬叶"],"url":"https://www.xiachufang.com/search/?keyword=%E9%BB%84%E5%92%96%E5%96%B1%E5%9C%9F%E8%B1%86%E9%B8%A1"},{"name":"打抛猪肉饭","style":"泰国","taste":["重辣","咸鲜"],"cost":20,"ingredients":["猪里脊","九层塔","干辣椒","大蒜","洋葱","鱼露","生抽","白糖","大米","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E6%89%93%E6%8A%9B%E7%8C%AA%E8%82%89%E9%A5%AD"},{"name":"菠萝炒饭","style":"泰国","taste":["酸甜","咸鲜"],"cost":25,"ingredients":["大米","菠萝","鲜虾","鸡蛋","腰果","葱","鱼露","白糖","咖喱粉","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8F%A0%E8%90%9D%E7%82%92%E9%A5%AD"},{"name":"泰式炒宽粉","style":"泰国","taste":["咸鲜"],"cost":22,"ingredients":["河粉","猪里脊","鸡蛋","豆芽","葱","生抽","蚝油","鱼露","白糖","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%82%92%E5%AE%BD%E7%B2%89"},{"name":"椰汁鸡汤","style":"泰国","taste":["甜口","清淡"],"cost":35,"ingredients":["鸡腿","椰浆","香茅","南姜","柠檬叶","鱼露","青柠","干辣椒","香菜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A4%B0%E6%B1%81%E9%B8%A1%E6%B1%A4"},{"name":"泰式烤鸡","style":"泰国","taste":["香辣","咸鲜"],"cost":30,"ingredients":["整鸡","香茅","大蒜","南姜","鱼露","椰浆","白糖","干辣椒","芫荽根","姜黄粉"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%83%A4%E9%B8%A1"},{"name":"泰式海南鸡饭","style":"泰国","taste":["清淡","咸鲜"],"cost":28,"ingredients":["整鸡","大米","生姜","葱","大蒜","香茅","鱼露","生抽","白糖","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E6%B5%B7%E5%8D%97%E9%B8%A1%E9%A5%AD"},{"name":"芒果糯米饭","style":"泰国","taste":["甜口"],"cost":25,"ingredients":["糯米","芒果","椰浆","白糖","盐","芝麻"],"url":"https://www.xiachufang.com/search/?keyword=%E8%8A%92%E6%9E%9C%E7%B3%AF%E7%B1%B3%E9%A5%AD"},{"name":"泰式炸鱼饼","style":"泰国","taste":["香辣","咸鲜"],"cost":30,"ingredients":["鲈鱼","红咖喱酱","柠檬叶","鱼露","白糖","面包糠","九层塔","鸡蛋","豇豆"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%82%B8%E9%B1%BC%E9%A5%BC"},{"name":"咖喱蟹","style":"泰国","taste":["香辣","甜口"],"cost":90,"ingredients":["花蟹","椰浆","红咖喱酱","鸡蛋","香茅","柠檬叶","鱼露","白糖","葱","九层塔"],"url":"https://www.xiachufang.com/search/?keyword=%E5%92%96%E5%96%B1%E8%9F%B9"},{"name":"泰式酸辣虾","style":"泰国","taste":["酸辣"],"cost":45,"ingredients":["鲜虾","干辣椒","大蒜","香茅","柠檬叶","青柠","鱼露","白糖","香菜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E9%85%B8%E8%BE%A3%E8%99%BE"},{"name":"香茅猪颈肉","style":"泰国","taste":["香辣","咸鲜"],"cost":35,"ingredients":["猪颈肉","香茅","大蒜","鱼露","白糖","干辣椒","南姜","柠檬叶","芫荽根"],"url":"https://www.xiachufang.com/search/?keyword=%E9%A6%99%E8%8C%85%E7%8C%AA%E9%A2%88%E8%82%89"},{"name":"清迈咖喱面","style":"泰国","taste":["香辣","甜口"],"cost":30,"ingredients":["鸡腿","蛋面","椰浆","黄咖喱酱","香茅","柠檬叶","鱼露","白糖","葱","泡菜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B8%85%E8%BF%88%E5%92%96%E5%96%B1%E9%9D%A2"},{"name":"泰式炸春卷","style":"泰国","taste":["咸鲜"],"cost":20,"ingredients":["春卷皮","猪里脊","粉丝","胡萝卜","木耳","鱼露","白糖","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%82%B8%E6%98%A5%E5%8D%B7"},{"name":"炭烧大虾","style":"泰国","taste":["咸鲜"],"cost":55,"ingredients":["鲜虾","大蒜","鱼露","白糖","香茅","青柠","干辣椒","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%AD%E7%83%A7%E5%A4%A7%E8%99%BE"},{"name":"打抛牛肉","style":"泰国","taste":["重辣","咸鲜"],"cost":40,"ingredients":["牛里脊","九层塔","干辣椒","大蒜","洋葱","鱼露","生抽","白糖","大米"],"url":"https://www.xiachufang.com/search/?keyword=%E6%89%93%E6%8A%9B%E7%89%9B%E8%82%89"},{"name":"泰式猪脚饭","style":"泰国","taste":["咸鲜","甜口"],"cost":30,"ingredients":["猪蹄","大米","生抽","老抽","白糖","八角","桂皮","香茅","大蒜","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%8C%AA%E8%84%9A%E9%A5%AD"},{"name":"椰汁虾汤","style":"泰国","taste":["甜口","清淡"],"cost":40,"ingredients":["鲜虾","椰浆","香茅","南姜","柠檬叶","鱼露","青柠","干辣椒","香菜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A4%B0%E6%B1%81%E8%99%BE%E6%B1%A4"},{"name":"咖喱粉丝虾","style":"泰国","taste":["香辣","甜口"],"cost":40,"ingredients":["鲜虾","粉丝","椰浆","咖喱块","香茅","鱼露","白糖","葱","柠檬叶"],"url":"https://www.xiachufang.com/search/?keyword=%E5%92%96%E5%96%B1%E7%B2%89%E4%B8%9D%E8%99%BE"},{"name":"泰式烤猪排","style":"泰国","taste":["咸鲜","香辣"],"cost":30,"ingredients":["猪里脊","香茅","大蒜","鱼露","白糖","南姜","干辣椒","芫荽根","椰浆"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%83%A4%E7%8C%AA%E6%8E%92"},{"name":"斑斓糕","style":"泰国","taste":["甜口"],"cost":20,"ingredients":["面粉","木薯粉","椰浆","斑斓叶","鸡蛋","牛奶","白糖"],"url":"https://www.xiachufang.com/search/?keyword=%E6%96%91%E6%96%93%E7%B3%95"},{"name":"椰子冰淇淋","style":"泰国","taste":["甜口"],"cost":15,"ingredients":["椰浆","白糖","盐","花生","玉米","芋头"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A4%B0%E5%AD%90%E5%86%B0%E6%B7%87%E6%B7%8B"},{"name":"泰式炒空心菜","style":"泰国","taste":["香辣","咸鲜"],"cost":12,"ingredients":["空心菜","大蒜","干辣椒","鱼露","生抽","白糖","虾酱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%82%92%E7%A9%BA%E5%BF%83%E8%8F%9C"},{"name":"泰式生牛肉沙拉","style":"泰国","taste":["酸辣"],"cost":50,"ingredients":["牛里脊","薄荷","葱","洋葱","大蒜","青柠","鱼露","干辣椒","香菜","花生"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%94%9F%E7%89%9B%E8%82%89%E6%B2%99%E6%8B%89"},{"name":"咖喱鱼饼","style":"泰国","taste":["香辣","咸鲜"],"cost":30,"ingredients":["鲈鱼","红咖喱酱","鱼露","白糖","柠檬叶","九层塔","豇豆","鸡蛋"],"url":"https://www.xiachufang.com/search/?keyword=%E5%92%96%E5%96%B1%E9%B1%BC%E9%A5%BC"},{"name":"蕉叶烤鱼","style":"泰国","taste":["香辣","咸鲜"],"cost":40,"ingredients":["鲈鱼","香茅","大蒜","干辣椒","鱼露","白糖","南姜","芫荽根","柠檬叶"],"url":"https://www.xiachufang.com/search/?keyword=%E8%95%89%E5%8F%B6%E7%83%A4%E9%B1%BC"},{"name":"泰北香肠","style":"泰国","taste":["香辣","酸辣"],"cost":25,"ingredients":["猪里脊","香茅","南姜","柠檬叶","干辣椒","大蒜","盐","白糖","姜黄粉"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%8C%97%E9%A6%99%E8%82%A0"},{"name":"椰糖煎饼","style":"泰国","taste":["甜口"],"cost":15,"ingredients":["面粉","椰糖","椰浆","鸡蛋","白糖","盐","黄油"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A4%B0%E7%B3%96%E7%85%8E%E9%A5%BC"},{"name":"泰式绿木瓜虾沙拉","style":"泰国","taste":["酸辣"],"cost":25,"ingredients":["青木瓜","虾干","花生","青柠","鱼露","干辣椒","大蒜","白糖","番茄"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%BB%BF%E6%9C%A8%E7%93%9C%E8%99%BE%E6%B2%99%E6%8B%89"},{"name":"泰式柚子沙拉","style":"泰国","taste":["酸甜","清淡"],"cost":25,"ingredients":["柚子","虾干","花生","椰浆","鱼露","青柠","干辣椒","香菜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E6%9F%9A%E5%AD%90%E6%B2%99%E6%8B%89"},{"name":"椰香咖喱贻贝","style":"泰国","taste":["香辣","甜口"],"cost":45,"ingredients":["青口贝","椰浆","红咖喱酱","香茅","柠檬叶","鱼露","白糖","九层塔","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%A4%B0%E9%A6%99%E5%92%96%E5%96%B1%E8%B4%BB%E8%B4%9D"},{"name":"泰式烧鸭","style":"泰国","taste":["咸鲜","甜口"],"cost":55,"ingredients":["鸭腿","麦芽糖","生抽","老抽","五香粉","白糖","料酒","生姜","葱","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%83%A7%E9%B8%AD"},{"name":"冬阴功炒饭","style":"泰国","taste":["酸辣"],"cost":22,"ingredients":["大米","鲜虾","香茅","柠檬叶","南姜","鱼露","白糖","干辣椒","鸡蛋","葱","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E5%86%AC%E9%98%B4%E5%8A%9F%E7%82%92%E9%A5%AD"},{"name":"泰式咖喱炒饭","style":"泰国","taste":["微辣","咸鲜"],"cost":20,"ingredients":["大米","鸡蛋","咖喱粉","洋葱","大蒜","鱼露","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E5%92%96%E5%96%B1%E7%82%92%E9%A5%AD"},{"name":"泰式米线汤","style":"泰国","taste":["咸鲜","清淡"],"cost":22,"ingredients":["米粉","猪里脊","豆芽","葱","鱼露","生抽","白糖","香菜","花生","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B3%B0%E5%BC%8F%E7%B1%B3%E7%BA%BF%E6%B1%A4"},{"name":"越南河粉（牛肉）","style":"越南","taste":["清淡","咸鲜"],"cost":25,"ingredients":["牛腩","牛骨","河粉","豆芽","葱","香菜","柠檬","鱼露","八角","桂皮","生姜","干辣椒","薄荷"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E6%B2%B3%E7%B2%89%EF%BC%88%E7%89%9B%E8%82%89%EF%BC%89"},{"name":"越南鸡肉粉","style":"越南","taste":["清淡","咸鲜"],"cost":22,"ingredients":["整鸡","河粉","豆芽","葱","香菜","柠檬","鱼露","生姜","盐","薄荷"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E9%B8%A1%E8%82%89%E7%B2%89"},{"name":"越南法棍","style":"越南","taste":["咸鲜"],"cost":15,"ingredients":["法棍面包","猪里脊","火腿","黄瓜","番茄","胡萝卜","香菜","干辣椒","鱼露","白糖","米醋"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E6%B3%95%E6%A3%8D"},{"name":"越式生春卷","style":"越南","taste":["清淡","咸鲜"],"cost":20,"ingredients":["米纸","鲜虾","猪里脊","米粉","豆芽","生菜","薄荷","香菜","花生酱","鱼露","柠檬","白糖","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E7%94%9F%E6%98%A5%E5%8D%B7"},{"name":"越式炸春卷","style":"越南","taste":["咸鲜"],"cost":20,"ingredients":["春卷皮","猪里脊","粉丝","胡萝卜","木耳","鱼露","白糖","鸡蛋","葱","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E7%82%B8%E6%98%A5%E5%8D%B7"},{"name":"越南甘蔗虾","style":"越南","taste":["甜口","咸鲜"],"cost":35,"ingredients":["鲜虾","甘蔗","淀粉","鱼露","白糖","大蒜","香菜","花生","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E7%94%98%E8%94%97%E8%99%BE"},{"name":"越式酸辣汤","style":"越南","taste":["酸辣"],"cost":30,"ingredients":["鲜虾","鱿鱼","菠萝","番茄","豆芽","香茅","鱼露","青柠","干辣椒","葱","香菜","九层塔"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E9%85%B8%E8%BE%A3%E6%B1%A4"},{"name":"越南煎饼","style":"越南","taste":["咸鲜"],"cost":25,"ingredients":["粘米粉","椰浆","鲜虾","猪里脊","豆芽","葱","鱼露","白糖","干辣椒","生菜","薄荷"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E7%85%8E%E9%A5%BC"},{"name":"越式粉丝汤","style":"越南","taste":["酸甜","咸鲜"],"cost":25,"ingredients":["猪里脊","米粉","葱","大蒜","鱼露","米醋","白糖","干辣椒","香菜","薄荷","黄瓜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E7%B2%89%E4%B8%9D%E6%B1%A4"},{"name":"河内鳢鱼锅","style":"越南","taste":["清淡","咸鲜"],"cost":45,"ingredients":["鳢鱼","茴香","葱","大蒜","鱼露","米粉","花生","香菜","生姜","姜黄粉"],"url":"https://www.xiachufang.com/search/?keyword=%E6%B2%B3%E5%86%85%E9%B3%A2%E9%B1%BC%E9%94%85"},{"name":"越式椰香咖喱鸡","style":"越南","taste":["微辣","甜口"],"cost":30,"ingredients":["鸡腿","椰浆","咖喱块","香茅","柠檬叶","鱼露","白糖","洋葱","大蒜","生姜","土豆"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E6%A4%B0%E9%A6%99%E5%92%96%E5%96%B1%E9%B8%A1"},{"name":"越式椰香咖喱蟹","style":"越南","taste":["香辣","甜口"],"cost":85,"ingredients":["花蟹","椰浆","咖喱块","香茅","柠檬叶","鱼露","白糖","洋葱","大蒜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E6%A4%B0%E9%A6%99%E5%92%96%E5%96%B1%E8%9F%B9"},{"name":"越南米纸卷","style":"越南","taste":["清淡","酸甜"],"cost":20,"ingredients":["米纸","猪里脊","黄瓜","胡萝卜","薄荷","香菜","鱼露","米醋","白糖","大蒜","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E7%B1%B3%E7%BA%B8%E5%8D%B7"},{"name":"越式烧烤拼盘","style":"越南","taste":["咸鲜","微辣"],"cost":50,"ingredients":["猪颈肉","鸡翅","鲜虾","香茅","大蒜","鱼露","白糖","干辣椒","南姜","柠檬叶"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E7%83%A7%E7%83%A4%E6%8B%BC%E7%9B%98"},{"name":"越南肉粽","style":"越南","taste":["咸鲜"],"cost":25,"ingredients":["糯米","猪里脊","绿豆","芭蕉叶","盐","白糖","黑胡椒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E8%82%89%E7%B2%BD"},{"name":"越南虾饼","style":"越南","taste":["咸鲜"],"cost":25,"ingredients":["鲜虾","面粉","鸡蛋","葱","盐","白糖","鱼露","干辣椒"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E8%99%BE%E9%A5%BC"},{"name":"越式扎肉","style":"越南","taste":["咸鲜"],"cost":25,"ingredients":["猪里脊","大蒜","鱼露","盐","白糖","黑胡椒","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E6%89%8E%E8%82%89"},{"name":"蒜香焗大虾","style":"越南","taste":["咸鲜"],"cost":55,"ingredients":["大头虾","大蒜","黄油","鱼露","盐","黑胡椒","葱","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%92%9C%E9%A6%99%E7%84%97%E5%A4%A7%E8%99%BE"},{"name":"越式猪脚饭","style":"越南","taste":["咸鲜","甜口"],"cost":28,"ingredients":["猪蹄","大米","鸡蛋","生抽","老抽","白糖","料酒","生姜","葱","大蒜","八角"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E7%8C%AA%E8%84%9A%E9%A5%AD"},{"name":"鸭仔蛋","style":"越南","taste":["咸鲜"],"cost":8,"ingredients":["鸭蛋","盐","柠檬","干辣椒","香菜","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E9%B8%AD%E4%BB%94%E8%9B%8B"},{"name":"越式牛肉火锅","style":"越南","taste":["酸辣","清淡"],"cost":70,"ingredients":["牛腩","牛里脊","豆芽","空心菜","香茅","柠檬叶","南姜","鱼露","青柠","干辣椒","香菜","薄荷","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E7%89%9B%E8%82%89%E7%81%AB%E9%94%85"},{"name":"越南滴漏咖啡","style":"越南","taste":["甜口"],"cost":15,"ingredients":["越南咖啡粉","炼乳","热水"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E6%BB%B4%E6%BC%8F%E5%92%96%E5%95%A1"},{"name":"越南三色冰","style":"越南","taste":["甜口"],"cost":18,"ingredients":["绿豆","红豆","芋头","椰浆","白糖","冰"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E4%B8%89%E8%89%B2%E5%86%B0"},{"name":"越南椰子冻","style":"越南","taste":["甜口"],"cost":15,"ingredients":["椰浆","白糖","琼脂","椰子水"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E6%A4%B0%E5%AD%90%E5%86%BB"},{"name":"青木瓜虾沙拉","style":"越南","taste":["酸辣"],"cost":25,"ingredients":["青木瓜","鲜虾","花生","胡萝卜","薄荷","香菜","青柠","鱼露","白糖","干辣椒","大蒜"],"url":"https://www.xiachufang.com/search/?keyword=%E9%9D%92%E6%9C%A8%E7%93%9C%E8%99%BE%E6%B2%99%E6%8B%89"},{"name":"越式腌萝卜","style":"越南","taste":["酸甜"],"cost":8,"ingredients":["白萝卜","胡萝卜","米醋","白糖","盐"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E8%85%8C%E8%90%9D%E5%8D%9C"},{"name":"越南蒸肠粉","style":"越南","taste":["清淡","咸鲜"],"cost":15,"ingredients":["粘米粉","猪里脊","鲜虾","葱","鱼露","生抽","白糖","盐","香油"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E8%92%B8%E8%82%A0%E7%B2%89"},{"name":"越式酸鱼汤","style":"越南","taste":["酸辣"],"cost":30,"ingredients":["鲈鱼","菠萝","番茄","豆芽","香茅","鱼露","青柠","干辣椒","葱","香菜","九层塔"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E9%85%B8%E9%B1%BC%E6%B1%A4"},{"name":"越式香茅炒虾","style":"越南","taste":["香辣","咸鲜"],"cost":40,"ingredients":["鲜虾","香茅","大蒜","干辣椒","鱼露","白糖","葱","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E9%A6%99%E8%8C%85%E7%82%92%E8%99%BE"},{"name":"越南鸡蛋咖啡","style":"越南","taste":["甜口"],"cost":18,"ingredients":["越南咖啡粉","鸡蛋","炼乳","白糖","热水"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E9%B8%A1%E8%9B%8B%E5%92%96%E5%95%A1"},{"name":"越式猪血汤","style":"越南","taste":["清淡","咸鲜"],"cost":20,"ingredients":["猪血","猪里脊","葱","香菜","鱼露","盐","白胡椒","生姜"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E7%8C%AA%E8%A1%80%E6%B1%A4"},{"name":"越式腌凤爪","style":"越南","taste":["酸辣"],"cost":15,"ingredients":["鸡爪","米醋","白糖","大蒜","干辣椒","鱼露","盐","葱"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%BC%8F%E8%85%8C%E5%87%A4%E7%88%AA"},{"name":"越南法式炖牛肉","style":"越南","taste":["咸鲜"],"cost":60,"ingredients":["牛腩","胡萝卜","土豆","洋葱","香茅","生姜","鱼露","生抽","白糖","八角","葱","法棍面包"],"url":"https://www.xiachufang.com/search/?keyword=%E8%B6%8A%E5%8D%97%E6%B3%95%E5%BC%8F%E7%82%96%E7%89%9B%E8%82%89"},{"name":"炸象鱼","style":"越南","taste":["咸鲜"],"cost":30,"ingredients":["象鱼","淀粉","盐","鱼露","白糖","干辣椒","大蒜","香菜"],"url":"https://www.xiachufang.com/search/?keyword=%E7%82%B8%E8%B1%A1%E9%B1%BC"}];
+
+// ===== 状态 =====
+const S = {
+  taste: [], // 多选
+  style: [], // 多选
+  fridgePri: true,
+  fridgeItems: {},
+  deck: [], deckIdx: 0,
+  table: []
+};
+const sw = { fridge: true };
+FRIDGE_GROUPS.forEach(g => S.fridgeItems[g] = []);
+
+// ===== 冰箱食材 =====
+function getAllFridge(){
+  return FRIDGE_GROUPS.flatMap(g => S.fridgeItems[g]);
+}
+
+// 通配映射：冰箱选了"猪肉"就能匹配所有猪肉细分
+const WILDCARD_MAP = {
+  '猪肉（全部）': ['五花肉','猪里脊','猪排骨','猪蹄','猪肝','猪腰','猪大肠','猪血','猪肚','猪耳','猪颈肉','腊肉','腊肠','猪脊骨','猪肉'],
+  '牛肉（全部）': ['牛腩','牛里脊','牛腱','牛百叶','牛舌','牛排骨','牛蹄筋','牛肉'],
+};
+function matchFridge(ing, fridge){
+  return fridge.some(f => {
+    if(f === ing || ing.includes(f) || f.includes(ing)) return true;
+    // 通配：选了"猪肉（全部）"则匹配所有猪肉
+    if(WILDCARD_MAP[f] && WILDCARD_MAP[f].some(w => ing.includes(w) || w.includes(ing))) return true;
+    return false;
+  });
+}
+
+// 精确计算实际需花费：按缺失食材单价加总
+function calcRealCost(r, fridge){
+  const missing = r.ingredients.filter(ing => !matchFridge(ing, fridge));
+  if(missing.length === 0) return 0;
+  let cost = 0;
+  missing.forEach(ing => { cost += (PRICE[ing] || 5); });
+  return Math.round(cost);
+}
+
+function budgetPill(cost){
+  if(cost < 15) return '<span class="budget-pill bp-eco">💚 经济</span>';
+  if(cost < 40) return '<span class="budget-pill bp-home">💛 家常</span>';
+  if(cost < 100) return '<span class="budget-pill bp-mid">🟠 中档</span>';
+  return '<span class="budget-pill bp-high">🔴 高档</span>';
+}
+
+// ===== UI 交互 =====
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('tab-'+p).classList.add('active');
+  if(p === 'table') renderTable();
+}
+
+function setBudget(v){
+  document.getElementById('budget').value = v || '';
+  document.querySelectorAll('.bq').forEach(b => b.classList.remove('sel'));
+  event.target.classList.add('sel');
+}
+
+// 多选 chip，最多3个
+function selChip(el, group){
+  const arr = group === 'taste' ? S.taste : S.style;
+  const val = el.textContent.trim();
+  const par = el.parentElement;
+
+  if(el.classList.contains('sel')){
+    // 取消选中
+    el.classList.remove('sel');
+    el.removeAttribute('data-n');
+    const idx = arr.indexOf(val);
+    if(idx >= 0) arr.splice(idx, 1);
+    let n = 1;
+    par.querySelectorAll('.chip.sel').forEach(c => { c.setAttribute('data-n', n++); });
+  } else {
+    if(val === '不限'){
+      // 选不限：清掉其他所有选中
+      par.querySelectorAll('.chip.sel').forEach(c => {
+        c.classList.remove('sel');
+        c.removeAttribute('data-n');
+      });
+      arr.length = 0;
+      el.classList.add('sel');
+      // 不限不显示数字
+    } else {
+      // 选具体选项：先取消"不限"
+      const unlimitEl = [...par.querySelectorAll('.chip')].find(c => c.textContent.trim() === '不限');
+      if(unlimitEl && unlimitEl.classList.contains('sel')){
+        unlimitEl.classList.remove('sel');
+        unlimitEl.removeAttribute('data-n');
+        const ui = arr.indexOf('不限');
+        if(ui >= 0) arr.splice(ui, 1);
+      }
+      if(arr.length >= 3) return; // 最多3个
+      arr.push(val);
+      el.classList.add('sel');
+      el.setAttribute('data-n', arr.length);
+    }
+  }
+  updateGenCount();
+}
+
+function togSwitch(name){
+  sw[name] = !sw[name];
+  document.getElementById('tog-'+name).classList.toggle('on', sw[name]);
+}
+
+function togIng(el, group){
+  el.classList.toggle('sel');
+  const items = Array.from(document.getElementById('grp-'+group).querySelectorAll('.ing-chip.sel')).map(c => c.textContent.trim());
+  S.fridgeItems[group] = items;
+  document.getElementById('cnt-'+group).textContent = items.length + '种';
+  // 更新冰箱总数
+  const total = FRIDGE_GROUPS.reduce((s,g) => s + S.fridgeItems[g].length, 0);
+  document.getElementById('fridgeTotalCount').textContent = total > 0 ? '已选 ' + total + ' 种食材' : '还没选食材';
+}
+
+// 通配选项（猪肉全部/牛肉全部）
+function togIngAll(el, group, label){
+  el.classList.toggle('sel');
+  const isSel = el.classList.contains('sel');
+  if(isSel){
+    if(!S.fridgeItems[group].includes(label)) S.fridgeItems[group].push(label);
+  } else {
+    S.fridgeItems[group] = S.fridgeItems[group].filter(x => x !== label);
+  }
+  const total = FRIDGE_GROUPS.reduce((s,g) => s + S.fridgeItems[g].length, 0);
+  document.getElementById('fridgeTotalCount').textContent = total > 0 ? '已选 ' + total + ' 种食材' : '还没选食材';
+}
+
+function updateGenCount(){
+  // 预估匹配数量
+  const fridge = getAllFridge();
+  let count = DB.length;
+  if(S.taste.length > 0) count = Math.round(count * 0.6);
+  if(S.style.length > 0) count = Math.round(count * (S.style.length / 10 * 1.5));
+  document.getElementById('genCount').textContent = '~' + Math.max(count, 10) + '道';
+}
+
+// ===== 生成推荐 =====
+function generate(){
+  const budgetStr = document.getElementById('budget').value;
+  const budget = parseInt(budgetStr) || 99999;
+  const fridge = getAllFridge();
+  const useFridge = sw.fridge;
+
+  let candidates = DB.map(r => {
+    const actual = calcRealCost(r, fridge);
+
+    // 预算过滤
+    if(budgetStr === '0'){
+      if(actual > 0) return null;
+    } else {
+      if(actual > budget) return null;
+    }
+
+    // 口味过滤（"不限"=跳过；多选：菜的口味包含任一选中即可）
+    const tastes = S.taste.filter(t => t !== '不限');
+    if(tastes.length > 0){
+      const ok = tastes.some(t => r.taste.includes(t));
+      if(!ok) return null;
+    }
+
+    // 菜系过滤（"不限"=跳过；多选：严格匹配任一选中菜系）
+    const styles = S.style.filter(s => s !== '不限');
+    if(styles.length > 0){
+      const ok = styles.some(s => r.style === s || r.style.startsWith(s) || s === r.style);
+      if(!ok) return null;
+    }
+
+    // 冰箱匹配得分
+    const matchCount = r.ingredients.filter(ing => matchFridge(ing, fridge)).length;
+    const matchRatio = r.ingredients.length > 0 ? matchCount / r.ingredients.length : 0;
+
+    return { ...r, actual, matchCount, matchRatio };
+  }).filter(Boolean);
+
+  if(candidates.length === 0){
+    document.getElementById('swipeArea').classList.add('show');
+    document.getElementById('cardStack').innerHTML = '<div class="empty-state"><span class="empty-emoji">🤔</span><div class="empty-text">没找到合适的菜<br>试试放宽预算或口味？</div></div>';
+    document.getElementById('swipeBtns').style.display = 'none';
+    document.getElementById('swipeCounter').style.display = 'none';
+    return;
+  }
+
+  // 分两组随机排序：冰箱匹配 vs 其他
+  function shuffle(arr){
+    for(let i = arr.length-1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  let fridgeGroup = [], otherGroup = [];
+  if(useFridge){
+    candidates.forEach(r => {
+      if(r.matchCount > 0) fridgeGroup.push(r);
+      else otherGroup.push(r);
+    });
+    shuffle(fridgeGroup);
+    shuffle(otherGroup);
+    S.deck = [...fridgeGroup, ...otherGroup];
+  } else {
+    shuffle(candidates);
+    S.deck = candidates;
+  }
+
+  S.deckIdx = 0;
+  document.getElementById('swipeArea').classList.add('show');
+  document.getElementById('swipeBtns').style.display = 'flex';
+  document.getElementById('swipeCounter').style.display = 'block';
+  renderDeck();
+  document.getElementById('swipeArea').scrollIntoView({behavior:'smooth'});
+}
+
+// ===== 卡片渲染 =====
+function renderDeck(){
+  const stack = document.getElementById('cardStack');
+  stack.innerHTML = '';
+  const fridge = getAllFridge();
+  const remaining = S.deck.length - S.deckIdx;
+
+  if(remaining <= 0){
+    stack.innerHTML = '<div class="empty-state"><span class="empty-emoji">🎉</span><div class="empty-text">看完了！<br>去餐桌查看今日菜单吧</div></div>';
+    document.getElementById('swipeBtns').style.display = 'none';
+    document.getElementById('swipeCounter').style.display = 'none';
+    return;
+  }
+
+  const showCount = Math.min(2, remaining);
+  for(let i = showCount-1; i >= 0; i--){
+    const r = S.deck[S.deckIdx + i];
+    if(!r) continue;
+    stack.insertAdjacentHTML('afterbegin', buildCard(r, fridge, i === 0));
+  }
+  const bg = stack.lastElementChild;
+  if(bg && showCount > 1) bg.style.transform = 'scale(0.94) translateY(14px)';
+
+  bindSwipe(stack.firstElementChild);
+  document.getElementById('swipeCounter').textContent = (S.deckIdx+1) + ' / ' + S.deck.length;
+}
+
+function buildCard(r, fridge, isTop){
+  const actual = r.actual !== undefined ? r.actual : calcRealCost(r, fridge);
+  const have = r.ingredients.filter(ing => matchFridge(ing, fridge));
+  const need = r.ingredients.filter(ing => !matchFridge(ing, fridge));
+  const ratio = r.ingredients.length > 0 ? Math.round(have.length / r.ingredients.length * 100) : 0;
+  const costText = actual === 0 ? '¥0（冰箱食材齐）' : '还需 ¥' + actual;
+  const haveTags = have.slice(0,5).map(n => '<span class="tag have">✓ '+n+'</span>').join('');
+  const needTags = need.slice(0,5).map(n => '<span class="tag need">+ '+n+'</span>').join('');
+  const moreHave = have.length > 5 ? '<span class="tag have">+' + (have.length-5) + '</span>' : '';
+  const moreNeed = need.length > 5 ? '<span class="tag need">+' + (need.length-5) + '</span>' : '';
+
+  return `<div class="swipe-card" id="topCard">
+    <div class="sc-header">
+      <div class="sc-cuisine">${r.style} · 冰箱匹配 ${ratio}%</div>
+      <div class="sc-name">${r.name}</div>
+      <div class="sc-meta">
+        <span>💰 ${costText}</span>
+        <span>参考价 ¥${r.cost}</span>
+      </div>
+      <div class="sc-taste-badge">${r.taste[0]}</div>
+    </div>
+    <div class="sc-body">
+      <div class="sc-ing-bar">
+        <div class="sc-ing-label">食材清单 <span>${have.length}/${r.ingredients.length} 已有</span></div>
+        <div class="ing-progress"><div class="ing-progress-bar" style="width:${ratio}%"></div></div>
+        <div class="tags">${haveTags}${moreHave}${needTags}${moreNeed}</div>
+      </div>
+      <div class="sc-budget-row">
+        ${budgetPill(r.cost)}
+        <span class="sc-ref-cost">食材参考价 ¥${r.cost}</span>
+      </div>
+      <a class="sc-link" href="${r.url}" target="_blank">📖 查看完整做法 →</a>
+    </div>
+  </div>`;
+}
+
+// ===== 拖拽 =====
+let dragStart=null, dragCurrent=null, isDragging=false;
+function bindSwipe(card){
+  if(!card) return;
+  card.addEventListener('mousedown', startDrag);
+  card.addEventListener('touchstart', startDrag, {passive:true});
+}
+function startDrag(e){
+  isDragging=true;
+  const pt=e.touches?e.touches[0]:e;
+  dragStart={x:pt.clientX,y:pt.clientY};
+  document.addEventListener('mousemove',onDrag);
+  document.addEventListener('touchmove',onDrag,{passive:true});
+  document.addEventListener('mouseup',endDrag);
+  document.addEventListener('touchend',endDrag);
+}
+function onDrag(e){
+  if(!isDragging) return;
+  const pt=e.touches?e.touches[0]:e;
+  dragCurrent={x:pt.clientX,y:pt.clientY};
+  const dx=dragCurrent.x-dragStart.x,dy=dragCurrent.y-dragStart.y;
+  const card=document.getElementById('topCard');
+  if(!card) return;
+  card.style.transform=`translateX(${dx}px) translateY(${dy*.3}px) rotate(${dx*.04}deg)`;
+  const pct=Math.abs(dx)/100;
+  document.getElementById('hintYes').style.opacity=dx>0?Math.min(pct,1):0;
+  document.getElementById('hintNo').style.opacity=dx<0?Math.min(pct,1):0;
+}
+function endDrag(e){
+  isDragging=false;
+  document.removeEventListener('mousemove',onDrag);
+  document.removeEventListener('touchmove',onDrag);
+  document.removeEventListener('mouseup',endDrag);
+  document.removeEventListener('touchend',endDrag);
+  if(!dragStart||!dragCurrent) return;
+  const dx=dragCurrent.x-dragStart.x;
+  dragStart=dragCurrent=null;
+  document.getElementById('hintYes').style.opacity=0;
+  document.getElementById('hintNo').style.opacity=0;
+  if(Math.abs(dx)>80) doSwipe(dx>0?'right':'left');
+  else{
+    const card=document.getElementById('topCard');
+    if(card){card.style.transition='transform .3s';card.style.transform='';}
+    setTimeout(()=>{if(card)card.style.transition='';},300);
+  }
+}
+function doSwipe(dir){
+  const card=document.getElementById('topCard');
+  if(!card) return;
+  const r=S.deck[S.deckIdx];
+  card.style.transition='transform .35s ease';
+  card.style.transform=`translateX(${dir==='right'?700:-700}px) rotate(${dir==='right'?25:-25}deg)`;
+  if(dir==='right'){S.table.push(r);updateBadge();}
+  S.deckIdx++;
+  setTimeout(renderDeck,350);
+}
+function updateBadge(){
+  const b=document.getElementById('tableBadge');
+  b.textContent=S.table.length;
+  b.classList.toggle('show',S.table.length>0);
+}
+
+// ===== 餐桌 =====
+function renderTable(){
+  const el=document.getElementById('tableContent');
+  if(S.table.length===0){
+    el.innerHTML='<div class="table-empty"><div style="font-size:56px;margin-bottom:12px">🍽️</div><div style="font-size:14px;line-height:2">还没选菜<br>去"今天吃什么"右滑选菜吧</div></div>';
+    return;
+  }
+  const fridge=getAllFridge();
+  const budgetLimit=parseInt(document.getElementById('budget').value)||0;
+  let total=0;
+  const cards=S.table.map((r,i)=>{
+    const actual=calcRealCost(r,fridge);
+    total+=actual;
+    const missing=r.ingredients.filter(ing=>!matchFridge(ing,fridge));
+    return '<div class="table-card">'
+      +'<div class="tc-head">'
+      +'<button class="tc-rm" onclick="removeTable('+i+')">移除</button>'
+      +'<div class="tc-cuisine">'+r.style+'</div>'
+      +'<div class="tc-name">'+r.name+'</div>'
+      +'<div class="tc-tags"><span class="tc-tag">'+r.taste[0]+'</span>'+budgetPill(r.cost)+'</div>'
+      +'</div>'
+      +'<div class="tc-body">'
+      +(missing.length>0
+        ?'<div class="tc-missing">📋 还需购买：'+missing.join('、')+'</div>'
+        :'<div class="tc-ok">✓ 冰箱食材已齐，今天不用买菜！</div>')
+      +'<a class="tc-link" href="'+r.url+'" target="_blank">📖 查看完整做法 →</a>'
+      +'<div class="cost-row">'
+      +'<div><div class="cost-label">实际花费</div><div class="cost-val" style="color:'+(actual===0?'var(--gr)':'var(--or)')+'">¥'+actual+'</div></div>'
+      +'<div style="text-align:right"><div class="cost-label">食材参考价</div><div class="cost-val" style="color:var(--mid)">¥'+r.cost+'</div></div>'
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  const isOver=budgetLimit>0&&total>budgetLimit;
+  const overAmt=total-budgetLimit;
+  const warningHTML=isOver
+    ?'<div class="budget-warning"><span class="bw-icon">⚠️</span><div class="bw-text"><div class="bw-title">今日花费已超出预算 ¥'+overAmt+'</div><div class="bw-sub">预算 ¥'+budgetLimit+'，当前合计 ¥'+total+'，考虑移除一道菜？</div></div></div>'
+    :'';
+  const totalBg=isOver?'background:linear-gradient(135deg,#be123c,#e11d48)':'background:linear-gradient(135deg,var(--or),var(--or2))';
+  el.innerHTML=warningHTML+cards
+    +'<div class="table-total" style="'+totalBg+'">'
+    +'<div class="tt-label">'+(isOver?'⚠️ 已超预算':'今日预计总花费')+'</div>'
+    +'<div class="tt-val">¥'+total+'</div>'
+    +(isOver?'<div style="font-size:12px;opacity:.8;margin-top:4px">预算 ¥'+budgetLimit+' · 超出 ¥'+overAmt+'</div>':'')
+    +'</div>';
+}
+
+// ===== 冰箱搜索 =====
+const _FIDX = {"五花肉": {"g": "pork", "t": "猪肉类"}, "猪里脊": {"g": "pork", "t": "猪肉类"}, "猪排骨": {"g": "pork", "t": "猪肉类"}, "猪蹄": {"g": "pork", "t": "猪肉类"}, "猪肝": {"g": "pork", "t": "猪肉类"}, "猪腰": {"g": "pork", "t": "猪肉类"}, "猪大肠": {"g": "pork", "t": "猪肉类"}, "猪血": {"g": "pork", "t": "猪肉类"}, "猪肚": {"g": "pork", "t": "猪肉类"}, "猪耳": {"g": "pork", "t": "猪肉类"}, "猪颈肉": {"g": "pork", "t": "猪肉类"}, "腊肉": {"g": "pork", "t": "猪肉类"}, "腊肠": {"g": "pork", "t": "猪肉类"}, "猪脊骨": {"g": "pork", "t": "猪肉类"}, "牛腩": {"g": "beef", "t": "牛羊肉"}, "牛里脊": {"g": "beef", "t": "牛羊肉"}, "牛腱": {"g": "beef", "t": "牛羊肉"}, "牛百叶": {"g": "beef", "t": "牛羊肉"}, "牛舌": {"g": "beef", "t": "牛羊肉"}, "牛排骨": {"g": "beef", "t": "牛羊肉"}, "牛蹄筋": {"g": "beef", "t": "牛羊肉"}, "羊肉": {"g": "beef", "t": "牛羊肉"}, "羊排": {"g": "beef", "t": "牛羊肉"}, "羊腿": {"g": "beef", "t": "牛羊肉"}, "整鸡": {"g": "poultry", "t": "禽肉类"}, "鸡腿": {"g": "poultry", "t": "禽肉类"}, "鸡翅": {"g": "poultry", "t": "禽肉类"}, "鸡胸": {"g": "poultry", "t": "禽肉类"}, "鸭腿": {"g": "poultry", "t": "禽肉类"}, "鸭胸": {"g": "poultry", "t": "禽肉类"}, "鹅肉": {"g": "poultry", "t": "禽肉类"}, "鸡爪": {"g": "poultry", "t": "禽肉类"}, "鸭血": {"g": "poultry", "t": "禽肉类"}, "鹅掌": {"g": "poultry", "t": "禽肉类"}, "鹅翅": {"g": "poultry", "t": "禽肉类"}, "鲜虾": {"g": "shrimp", "t": "虾蟹类"}, "大头虾": {"g": "shrimp", "t": "虾蟹类"}, "龙虾": {"g": "shrimp", "t": "虾蟹类"}, "花蟹": {"g": "shrimp", "t": "虾蟹类"}, "螃蟹": {"g": "shrimp", "t": "虾蟹类"}, "大闸蟹": {"g": "shrimp", "t": "虾蟹类"}, "濑尿虾": {"g": "shrimp", "t": "虾蟹类"}, "小龙虾": {"g": "shrimp", "t": "虾蟹类"}, "薄壳": {"g": "shrimp", "t": "虾蟹类"}, "血蛤": {"g": "shrimp", "t": "虾蟹类"}, "海螺": {"g": "shrimp", "t": "虾蟹类"}, "三文鱼": {"g": "fish", "t": "鱼类"}, "鲈鱼": {"g": "fish", "t": "鱼类"}, "草鱼": {"g": "fish", "t": "鱼类"}, "鲤鱼": {"g": "fish", "t": "鱼类"}, "鳜鱼": {"g": "fish", "t": "鱼类"}, "鳕鱼": {"g": "fish", "t": "鱼类"}, "秋刀鱼": {"g": "fish", "t": "鱼类"}, "带鱼": {"g": "fish", "t": "鱼类"}, "鱼头（花鲢）": {"g": "fish", "t": "鱼类"}, "鳢鱼": {"g": "fish", "t": "鱼类"}, "石斑鱼": {"g": "fish", "t": "鱼类"}, "金枪鱼": {"g": "fish", "t": "鱼类"}, "鱿鱼": {"g": "seafood", "t": "其他海鲜"}, "章鱼": {"g": "seafood", "t": "其他海鲜"}, "扇贝": {"g": "seafood", "t": "其他海鲜"}, "花甲": {"g": "seafood", "t": "其他海鲜"}, "青口贝": {"g": "seafood", "t": "其他海鲜"}, "生蚝": {"g": "seafood", "t": "其他海鲜"}, "帝王蟹": {"g": "seafood", "t": "其他海鲜"}, "海参": {"g": "seafood", "t": "其他海鲜"}, "鸡蛋": {"g": "egg", "t": "蛋类"}, "鸭蛋": {"g": "egg", "t": "蛋类"}, "皮蛋": {"g": "egg", "t": "蛋类"}, "咸蛋": {"g": "egg", "t": "蛋类"}, "牛奶": {"g": "dairy", "t": "奶制品"}, "淡奶油": {"g": "misc", "t": "西餐食材"}, "黄油": {"g": "misc", "t": "西餐食材"}, "芝士": {"g": "misc", "t": "西餐食材"}, "椰浆": {"g": "dairy", "t": "奶制品"}, "嫩豆腐": {"g": "tofu", "t": "豆制品"}, "老豆腐": {"g": "tofu", "t": "豆制品"}, "干豆腐": {"g": "tofu", "t": "豆制品"}, "豆腐皮": {"g": "tofu", "t": "豆制品"}, "腐竹": {"g": "tofu", "t": "豆制品"}, "豆芽": {"g": "tofu", "t": "豆制品"}, "油豆腐": {"g": "tofu", "t": "豆制品"}, "白菜": {"g": "leaf", "t": "叶菜类"}, "菠菜": {"g": "leaf", "t": "叶菜类"}, "包菜": {"g": "leaf", "t": "叶菜类"}, "生菜": {"g": "leaf", "t": "叶菜类"}, "空心菜": {"g": "leaf", "t": "叶菜类"}, "油麦菜": {"g": "leaf", "t": "叶菜类"}, "韭菜": {"g": "leaf", "t": "叶菜类"}, "芹菜": {"g": "leaf", "t": "叶菜类"}, "菜心": {"g": "leaf", "t": "叶菜类"}, "西蓝花": {"g": "leaf", "t": "叶菜类"}, "番薯叶": {"g": "leaf", "t": "叶菜类"}, "土豆": {"g": "root", "t": "根茎瓜果"}, "白萝卜": {"g": "root", "t": "根茎瓜果"}, "胡萝卜": {"g": "root", "t": "根茎瓜果"}, "莲藕": {"g": "root", "t": "根茎瓜果"}, "冬瓜": {"g": "root", "t": "根茎瓜果"}, "南瓜": {"g": "root", "t": "根茎瓜果"}, "芋头": {"g": "root", "t": "根茎瓜果"}, "番薯": {"g": "root", "t": "根茎瓜果"}, "玉米": {"g": "root", "t": "根茎瓜果"}, "番茄": {"g": "root", "t": "根茎瓜果"}, "茄子": {"g": "root", "t": "根茎瓜果"}, "青椒": {"g": "root", "t": "根茎瓜果"}, "尖椒": {"g": "root", "t": "根茎瓜果"}, "黄瓜": {"g": "root", "t": "根茎瓜果"}, "豆角": {"g": "root", "t": "根茎瓜果"}, "洋葱": {"g": "root", "t": "根茎瓜果"}, "冬笋": {"g": "root", "t": "根茎瓜果"}, "香菇": {"g": "mushroom", "t": "菌菇类"}, "平菇": {"g": "mushroom", "t": "菌菇类"}, "金针菇": {"g": "mushroom", "t": "菌菇类"}, "木耳": {"g": "mushroom", "t": "菌菇类"}, "榛蘑": {"g": "mushroom", "t": "菌菇类"}, "杏鲍菇": {"g": "mushroom", "t": "菌菇类"}, "茶树菇": {"g": "mushroom", "t": "菌菇类"}, "大蒜": {"g": "herb", "t": "葱姜蒜香料"}, "生姜": {"g": "herb", "t": "葱姜蒜香料"}, "葱": {"g": "herb", "t": "葱姜蒜香料"}, "香茅": {"g": "herb", "t": "葱姜蒜香料"}, "柠檬叶": {"g": "herb", "t": "葱姜蒜香料"}, "九层塔": {"g": "herb", "t": "葱姜蒜香料"}, "香菜": {"g": "herb", "t": "葱姜蒜香料"}, "薄荷": {"g": "herb", "t": "葱姜蒜香料"}, "南姜": {"g": "herb", "t": "葱姜蒜香料"}, "子姜": {"g": "herb", "t": "葱姜蒜香料"}, "大米": {"g": "grain", "t": "主食干货"}, "糯米": {"g": "grain", "t": "主食干货"}, "面条": {"g": "grain", "t": "主食干货"}, "粉条": {"g": "grain", "t": "主食干货"}, "粉丝": {"g": "grain", "t": "主食干货"}, "河粉": {"g": "grain", "t": "主食干货"}, "米粉": {"g": "grain", "t": "主食干货"}, "米纸": {"g": "grain", "t": "主食干货"}, "乌冬面": {"g": "grain", "t": "主食干货"}, "荞麦面": {"g": "grain", "t": "主食干货"}, "意大利面": {"g": "grain", "t": "主食干货"}, "面粉": {"g": "grain", "t": "主食干货"}, "生抽": {"g": "sauce", "t": "酱料调味"}, "老抽": {"g": "sauce", "t": "酱料调味"}, "蚝油": {"g": "sauce", "t": "酱料调味"}, "鱼露": {"g": "sauce", "t": "酱料调味"}, "豆瓣酱": {"g": "sauce", "t": "酱料调味"}, "剁椒": {"g": "sauce", "t": "酱料调味"}, "老干妈": {"g": "sauce", "t": "酱料调味"}, "豆豉": {"g": "sauce", "t": "酱料调味"}, "花椒": {"g": "sauce", "t": "酱料调味"}, "干辣椒": {"g": "sauce", "t": "酱料调味"}, "八角": {"g": "sauce", "t": "酱料调味"}, "桂皮": {"g": "sauce", "t": "酱料调味"}, "料酒": {"g": "sauce", "t": "酱料调味"}, "米醋": {"g": "sauce", "t": "酱料调味"}, "白糖": {"g": "sauce", "t": "酱料调味"}, "淀粉": {"g": "sauce", "t": "酱料调味"}, "芝麻酱": {"g": "sauce", "t": "酱料调味"}, "花生酱": {"g": "sauce", "t": "酱料调味"}, "味噌": {"g": "sauce", "t": "酱料调味"}, "咖喱块": {"g": "sauce", "t": "酱料调味"}, "红咖喱酱": {"g": "sauce", "t": "酱料调味"}, "绿咖喱酱": {"g": "sauce", "t": "酱料调味"}, "沙茶酱": {"g": "sauce", "t": "酱料调味"}, "芥末": {"g": "sauce", "t": "酱料调味"}, "蜂蜜": {"g": "sauce", "t": "酱料调味"}, "海苔": {"g": "sauce", "t": "酱料调味"}, "酸菜": {"g": "sauce", "t": "酱料调味"}, "泡椒": {"g": "sauce", "t": "酱料调味"}, "泡菜": {"g": "sauce", "t": "酱料调味"}, "梅干菜": {"g": "sauce", "t": "酱料调味"}, "红酒": {"g": "misc", "t": "西餐食材"}, "白葡萄酒": {"g": "misc", "t": "西餐食材"}, "培根": {"g": "misc", "t": "西餐食材"}, "火腿": {"g": "misc", "t": "西餐食材"}, "午餐肉": {"g": "misc", "t": "西餐食材"}, "柠檬": {"g": "misc", "t": "西餐食材"}, "青柠": {"g": "misc", "t": "西餐食材"}, "欧芹": {"g": "misc", "t": "西餐食材"}, "迷迭香": {"g": "misc", "t": "西餐食材"}, "百里香": {"g": "misc", "t": "西餐食材"}, "罗勒": {"g": "misc", "t": "西餐食材"}, "黑胡椒": {"g": "misc", "t": "西餐食材"}, "腰果": {"g": "misc", "t": "西餐食材"}, "花生": {"g": "misc", "t": "西餐食材"}};
+
+function searchIng(val){
+  const res=document.getElementById('fridgeSearchResults');
+  if(!val||val.trim().length<1){res.classList.remove('show');return;}
+  const q=val.trim();
+  const matches=Object.keys(_FIDX).filter(k=>k.includes(q)).slice(0,10);
+  if(matches.length===0){
+    res.innerHTML='<div class="search-no-result">没有找到"'+q+'"，试试其他关键词</div>';
+    res.classList.add('show');return;
+  }
+  res.innerHTML=matches.map(item=>{
+    const info=_FIDX[item];
+    const isSel=(S.fridgeItems[info.g]||[]).includes(item);
+    return '<div class="search-result-item'+(isSel?' selected':'')+'" onclick="toggleIngBySearch(\''+item+'\',\''+info.g+'\',this)">'
+      +'<span>'+item+'</span>'
+      +'<span class="sri-cat">'+info.t+' <span class="sri-check">'+(isSel?'✓ 已添加':'点击添加')+'</span></span>'
+      +'</div>';
+  }).join('');
+  res.classList.add('show');
+}
+
+function toggleIngBySearch(item,group,el){
+  const grpEl=document.getElementById('grp-'+group);
+  if(grpEl){
+    const chip=[...grpEl.querySelectorAll('.ing-chip')].find(c=>c.textContent.trim()===item);
+    if(chip) chip.click();
+  }
+  setTimeout(()=>{
+    const nowSel=(S.fridgeItems[group]||[]).includes(item);
+    el.className='search-result-item'+(nowSel?' selected':'');
+    el.querySelector('.sri-check').textContent=nowSel?'✓ 已添加':'点击添加';
+  },60);
+}
+
+function hideFridgeSearch(){
+  document.getElementById('fridgeSearchResults').classList.remove('show');
+}
+
+
+function removeTable(i){
+  S.table.splice(i,1);
+  updateBadge();
+  renderTable();
+}
+</script>
+
+<script>
+// ===== PWA 内联安装 =====
+(function(){
+  // 动态生成 manifest
+  const manifest = {
+    name: "今天做什么菜",
+    short_name: "今天吃什么",
+    description: "436道菜·10大菜系·智能推荐今天吃什么",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#faf8f5",
+    theme_color: "#ff6b35",
+    orientation: "portrait",
+    icons: [
+      {
+        src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="120" fill="#ff6b35"/><text x="256" y="340" font-size="280" text-anchor="middle">🍳</text></svg>`),
+        sizes: "512x512",
+        type: "image/svg+xml",
+        purpose: "any maskable"
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest').href = url;
+
+  // Apple touch icon（SVG转dataURL）
+  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="120" fill="#ff6b35"/><text x="256" y="340" font-size="280" text-anchor="middle">🍳</text></svg>`;
+  const iconBlob = new Blob([iconSvg], {type:'image/svg+xml'});
+  document.getElementById('pwa-icon').href = URL.createObjectURL(iconBlob);
+
+  // 注册 Service Worker（内联）
+  if('serviceWorker' in navigator){
+    const swCode = `
+const CACHE = 'dinner-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(['/']))
+    .catch(()=>{})
+  );
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(()=>
+      new Response('<h2 style="font-family:sans-serif;text-align:center;padding:40px">📱 离线中，请连网后刷新</h2>', {headers:{'Content-Type':'text/html'}})
+    ))
+  );
+});
+`;
+    const swBlob = new Blob([swCode], {type:'application/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl, {scope: './'})
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.log('SW:', e));
+  }
+
+  // 安装提示按钮
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstallBtn();
+  });
+
+  function showInstallBtn(){
+    const btn = document.createElement('div');
+    btn.id = 'pwa-install-btn';
+    btn.innerHTML = '📲 添加到主屏幕';
+    btn.style.cssText = `
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:linear-gradient(135deg,#ff6b35,#ff8c5a);color:white;
+      padding:12px 24px;border-radius:24px;font-size:13px;font-weight:700;
+      font-family:'Noto Sans SC',sans-serif;cursor:pointer;z-index:9999;
+      box-shadow:0 6px 20px rgba(255,107,53,.4);white-space:nowrap;
+      animation:pwa-bounce .6s ease infinite alternate;
+    `;
+    document.head.insertAdjacentHTML('beforeend',
+      '<style>@keyframes pwa-bounce{from{transform:translateX(-50%) translateY(0)}to{transform:translateX(-50%) translateY(-4px)}}</style>'
+    );
+    document.body.appendChild(btn);
+    btn.addEventListener('click', async ()=>{
+      if(deferredPrompt){
+        deferredPrompt.prompt();
+        const {outcome} = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        btn.remove();
+      }
+    });
+    setTimeout(()=>{ if(btn.parentNode) btn.remove(); }, 8000);
+  }
+})();
+</script>
+</body>
+</html>
